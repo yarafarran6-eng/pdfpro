@@ -996,6 +996,14 @@ function buildBarcode(){
           <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${_lang==='ar'?'حفظ في المخزن:':'Save to Storage:'}</div>
           <div class="field" style="margin-bottom:8px"><label>${_lang==='ar'?'العنوان':'Title'}</label><input type="text" id="bcSaveTitle" placeholder="${_lang==='ar'?'مثال: باركود هويتي':'e.g. My ID barcode'}"></div>
           <div class="field" style="margin-bottom:8px"><label>${_lang==='ar'?'الوصف (اختياري)':'Description (optional)'}</label><input type="text" id="bcSaveDesc" placeholder="${_lang==='ar'?'وصف مختصر...':'Short description...'}"></div>
+          <div class="field" style="margin-bottom:8px">
+            <label>${_lang==='ar'?'صورة مرفقة (اختياري)':'Attached image (optional)'}</label>
+            <label style="display:block;padding:10px;background:var(--card2);border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:12px;text-align:center;cursor:pointer">
+              <span id="bcImgLabel">${_lang==='ar'?'اختر صورة...':'Choose image...'}</span>
+              <input type="file" id="bcSaveImg" accept="image/*" style="display:none">
+            </label>
+            <img id="bcSaveImgEl" style="display:none;width:100%;max-height:120px;object-fit:contain;border-radius:8px;margin-top:8px;border:1px solid var(--border)">
+          </div>
           <button onclick="bcSaveToStorage()" style="width:100%;padding:11px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"> ${_lang==='ar'?'حفظ':'Save'}</button>
         </div>
       </div>
@@ -1167,6 +1175,11 @@ function bcDeleteItem(id){
 function buildSTT(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('تكلم والتطبيق يكتب ما تقوله. يدعم العربي والإنجليزي.','Speak and the app writes what you say.')}
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="sttTabLive" onclick="sttShowTab('live')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--red);background:rgba(229,57,53,0.1);color:var(--red);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'تسجيل مباشر':'Live Recording'}</button>
+      <button id="sttTabFile" onclick="sttShowTab('file')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--card2);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'ملف صوتي':'Audio File'}</button>
+    </div>
+    <div id="sttPanelLive">
     <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
       <div class="field">
         <label>${_lang==='ar'?'اللغة:':'Language:'}</label>
@@ -1182,6 +1195,19 @@ function buildSTT(){
       </button>
       <div id="sttStatus" style="text-align:center;font-size:12px;color:var(--text3);margin-top:8px"></div>
     </div>
+    </div>
+    <div id="sttPanelFile" style="display:none">
+    <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
+      <label style="display:block;padding:16px;background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;color:var(--text2);font-size:13px;text-align:center;cursor:pointer;margin-bottom:12px">
+        ${_lang==='ar'?'اضغط لاختيار ملف صوتي من جهازك':'Tap to choose an audio file from your device'}
+        <input type="file" id="sttAudioIn" accept="audio/*" style="display:none">
+      </label>
+      <div id="sttFilePlayer" style="display:none;margin-bottom:10px">
+        <audio id="sttAudioPlayer" controls style="width:100%;border-radius:8px"></audio>
+      </div>
+      <div style="font-size:11px;color:var(--text3);background:var(--card2);border-radius:8px;padding:10px;line-height:1.6">${_lang==='ar'?'التفريغ الآلي الكامل للملفات المرفوعة غير مدعوم تقنياً في المتصفح حالياً. استخدم تبويب "تسجيل مباشر" وشغّل الملف بجانب الميكروفون، أو سجّل صوتك مباشرة.':'Full automatic transcription of uploaded files is not technically supported in-browser yet. Use the "Live Recording" tab and play the file near the microphone, or record your voice directly.'}</div>
+    </div>
+    </div>
     <div style="background:var(--card);border-radius:10px;padding:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <label style="font-size:13px;font-weight:600;color:var(--text)">${_lang==='ar'?'النص:':'Text:'}</label>
@@ -1196,6 +1222,25 @@ function buildSTT(){
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
     toast(_lang==='ar'?'استخدم Chrome للحصول على هذه الميزة':'Use Chrome for this feature','err');
   }
+  setTimeout(function(){
+    var ain=document.getElementById('sttAudioIn');
+    if(ain)ain.addEventListener('change',function(e){
+      var f=e.target.files[0];if(!f)return;
+      var p=document.getElementById('sttAudioPlayer'),w=document.getElementById('sttFilePlayer');
+      if(p)p.src=URL.createObjectURL(f);
+      if(w)w.style.display='block';
+    });
+  },100);
+}
+
+function sttShowTab(t){
+  var isLive=t==='live';
+  var bl=document.getElementById('sttTabLive'),bf=document.getElementById('sttTabFile');
+  if(bl){bl.style.borderColor=isLive?'var(--red)':'var(--border)';bl.style.background=isLive?'rgba(229,57,53,0.1)':'var(--card2)';bl.style.color=isLive?'var(--red)':'var(--text2)';}
+  if(bf){bf.style.borderColor=!isLive?'var(--red)':'var(--border)';bf.style.background=!isLive?'rgba(229,57,53,0.1)':'var(--card2)';bf.style.color=!isLive?'var(--red)':'var(--text2)';}
+  var pl=document.getElementById('sttPanelLive'),pf=document.getElementById('sttPanelFile');
+  if(pl)pl.style.display=isLive?'block':'none';
+  if(pf)pf.style.display=!isLive?'block':'none';
 }
 
 var _sttRec=null,_sttActive=false;
@@ -1238,6 +1283,17 @@ function buildTTS(){
         <button onclick="window.speechSynthesis&&window.speechSynthesis.pause()" style="flex:1;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">⏸</button>
         <button onclick="window.speechSynthesis&&window.speechSynthesis.cancel()" style="flex:1;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">⏹</button>
       </div>
+    </div>
+    <div id="ttsPanelFile" style="display:none">
+    <div style="background:var(--card);border-radius:10px;padding:14px">
+      <label style="display:block;padding:16px;background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;color:var(--text2);font-size:13px;text-align:center;cursor:pointer;margin-bottom:12px">
+        ${_lang==='ar'?'اضغط لاختيار ملف صوتي من جهازك':'Tap to choose an audio file from your device'}
+        <input type="file" id="ttsAudioIn" accept="audio/*" style="display:none">
+      </label>
+      <div id="ttsFilePlayer" style="display:none">
+        <audio id="ttsAudioPlayer" controls style="width:100%;border-radius:8px"></audio>
+      </div>
+    </div>
     </div>
     <div style="background:var(--card);border-radius:10px;padding:14px">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">${_lang==='ar'?'تحميل أصوات إضافية:':'Download More Voices:'}</div>
