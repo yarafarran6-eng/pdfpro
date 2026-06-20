@@ -998,11 +998,18 @@ function buildBarcode(){
           <div class="field" style="margin-bottom:8px"><label>${_lang==='ar'?'الوصف (اختياري)':'Description (optional)'}</label><input type="text" id="bcSaveDesc" placeholder="${_lang==='ar'?'وصف مختصر...':'Short description...'}"></div>
           <div class="field" style="margin-bottom:8px">
             <label>${_lang==='ar'?'صورة مرفقة (اختياري)':'Attached image (optional)'}</label>
-            <label style="display:block;padding:10px;background:var(--card2);border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:12px;text-align:center;cursor:pointer">
-              <span id="bcImgLabel">${_lang==='ar'?'اختر صورة...':'Choose image...'}</span>
-              <input type="file" id="bcSaveImg" accept="image/*" style="display:none">
-            </label>
-            <img id="bcSaveImgEl" style="display:none;width:100%;max-height:120px;object-fit:contain;border-radius:8px;margin-top:8px;border:1px solid var(--border)">
+            <div style="display:flex;gap:8px">
+              <label style="flex:1;display:block;padding:10px;background:var(--card2);border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:12px;text-align:center;cursor:pointer">
+                ${_lang==='ar'?'إعادة التقاط بالكاميرا':'Retake with Camera'}
+                <input type="file" id="bcSaveImgCam" accept="image/*" capture="environment" style="display:none">
+              </label>
+              <label style="flex:1;display:block;padding:10px;background:var(--card2);border:1px dashed var(--border);border-radius:8px;color:var(--text2);font-size:12px;text-align:center;cursor:pointer">
+                ${_lang==='ar'?'من المعرض':'From Gallery'}
+                <input type="file" id="bcSaveImg" accept="image/*" style="display:none">
+              </label>
+            </div>
+            <div id="bcImgLabel" style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center"></div>
+            <img id="bcSaveImgEl" style="display:none;width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:8px;border:1px solid var(--border)">
           </div>
           <button onclick="bcSaveToStorage()" style="width:100%;padding:11px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"> ${_lang==='ar'?'حفظ':'Save'}</button>
         </div>
@@ -1038,14 +1045,18 @@ function buildBarcode(){
 
   window._bcEditId=null;
   setTimeout(function(){
-    var imgIn=document.getElementById('bcSaveImg');
-    if(imgIn)imgIn.addEventListener('change',function(e){
-      var f=e.target.files[0];if(!f)return;
-      window._bcSaveImgUrl=URL.createObjectURL(f);
-      var el=document.getElementById('bcSaveImgEl');var lbl=document.getElementById('bcImgLabel');
-      if(el){el.src=window._bcSaveImgUrl;el.style.display='block';}
-      if(lbl)lbl.textContent=f.name;
-    });
+    function wireImgInput(id){
+      var imgIn=document.getElementById(id);
+      if(imgIn)imgIn.addEventListener('change',function(e){
+        var f=e.target.files[0];if(!f)return;
+        window._bcSaveImgUrl=URL.createObjectURL(f);
+        var el=document.getElementById('bcSaveImgEl');var lbl=document.getElementById('bcImgLabel');
+        if(el){el.src=window._bcSaveImgUrl;el.style.display='block';}
+        if(lbl)lbl.textContent=_lang==='ar'?'تم اختيار صورة جديدة':'New image selected';
+      });
+    }
+    wireImgInput('bcSaveImg');
+    wireImgInput('bcSaveImgCam');
   },100);
 }
 
@@ -1153,7 +1164,7 @@ function bcRenderStore(){
       +'<div style="font-size:11px;color:var(--text3)">'+item.date+'</div>'
       +'</div>'
       +'<div style="display:flex;gap:4px;flex-shrink:0">'
-      +'<button onclick="bcEditItem('+item.id+')" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;padding:6px 8px;font-size:13px"></button>'
+      +'<button onclick="bcEditItem('+item.id+')" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;padding:6px 10px;font-size:11px;font-family:inherit">'+(_lang==='ar'?'تعديل':'Edit')+'</button>'
       +'<button onclick="bcDeleteItem('+item.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:6px 8px;font-size:16px">✕</button>'
       +'</div>'
       +'</div>'
@@ -1174,7 +1185,7 @@ function bcEditItem(id){
   var txt=document.getElementById('bcText');if(txt){txt.textContent=item.value;document.getElementById('bcResult').style.display='block';}
   var t=document.getElementById('bcSaveTitle');if(t)t.value=item.title;
   var d=document.getElementById('bcSaveDesc');if(d)d.value=item.desc||'';
-  if(item.img){window._bcSaveImgUrl=item.img;var el=document.getElementById('bcSaveImgEl');if(el){el.src=item.img;el.style.display='block';}}
+  if(item.img){window._bcSaveImgUrl=item.img;var el=document.getElementById('bcSaveImgEl');if(el){el.src=item.img;el.style.display='block';}var lbl=document.getElementById('bcImgLabel');if(lbl)lbl.textContent=_lang==='ar'?'الصورة المحفوظة (اضغط أعلاه لتغييرها)':'Saved image (tap above to change)';}
   toast(_lang==='ar'?'عدّل البيانات ثم اضغط حفظ':'Edit and press Save','ok');
 }
 
@@ -1265,25 +1276,34 @@ function buildTTS(){
   if(!window.speechSynthesis){
     toast(_lang==='ar'?'المتصفح لا يدعم هذه الميزة':'Browser not supported','err');return;
   }
-  function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';var info=document.getElementById('ttsVoiceInfo');if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'لا يوجد صوت':'No voice')+'</option>';if(info)info.innerHTML=_lang==='ar'?'⚠️ لم يُعثر على أي صوت TTS على هذا الجهاز. هذا إعداد على مستوى نظام أندرويد وليس بالموقع: افتح إعدادات الجهاز ← إدارة عامة (أو إمكانية الوصول) ← تحويل النص إلى كلام، وتأكد من وجود محرك مُفعّل وبيانات صوتية مُحمّلة.':'⚠️ No TTS voice found on this device. This is an Android system setting, not the website: open device Settings → General management (or Accessibility) → Text-to-speech output, and make sure an engine is enabled with voice data installed.';return;}if(info)info.textContent=(_lang==='ar'?('تم العثور على '+voices.length+' صوت متاح'):('Found '+voices.length+' voices available'));voices.sort(function(a,b){var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o);});}
+  function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';var info=document.getElementById('ttsVoiceInfo');if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'لا يوجد صوت':'No voice')+'</option>';if(info)info.innerHTML=_lang==='ar'?'⚠️ لم يُعثر على أي صوت TTS على هذا الجهاز. هذا إعداد على مستوى نظام أندرويد وليس بالموقع: افتح إعدادات الجهاز ← إدارة عامة (أو إمكانية الوصول) ← تحويل النص إلى كلام، وتأكد من وجود محرك مُفعّل وبيانات صوتية مُحمّلة.':'⚠️ No TTS voice found on this device. This is an Android system setting, not the website: open device Settings → General management (or Accessibility) → Text-to-speech output, and make sure an engine is enabled with voice data installed.';return;}if(info)info.textContent=(_lang==='ar'?('تم العثور على '+voices.length+' صوت متاح'):('Found '+voices.length+' voices available'));voices.sort(function(a,b){var aL=a.localService,bL=b.localService;if(aL&&!bL)return -1;if(!aL&&bL)return 1;var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+') '+(v.localService?(_lang==='ar'?'[محلي]':'[Local]'):(_lang==='ar'?'[شبكة]':'[Network]'));sel.appendChild(o);});var firstLocal=voices.find(function(v){return v.localService;});if(firstLocal)sel.value=firstLocal.name;}
   window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
 }
 
 var _ttsUtt=null;
-function ttsSpeak(){
+function ttsSpeak(isRetry){
   if(!window.speechSynthesis){toast(_lang==='ar'?'غير مدعوم في هذا المتصفح':'Not supported in this browser','err');return;}
   var text=document.getElementById('ttsInput')?.value?.trim();
   if(!text){toast(_lang==='ar'?'اكتب نصاً أولاً':'Write text first','err');return;}
   window.speechSynthesis.cancel();
   var utt=new SpeechSynthesisUtterance(text);
   _ttsUtt=utt; // إبقاء مرجع حي للكائن لتفادي حذفه من الذاكرة (Garbage Collection) قبل انتهاء النطق على متصفحات أندرويد
-  var selVoice=document.getElementById('ttsVoice')?.value;
-  var voices=window.speechSynthesis.getVoices();
-  var voice=voices.find(function(v){return v.name===selVoice;});
-  if(voice)utt.voice=voice;
+  if(isRetry!==true){
+    var selVoice=document.getElementById('ttsVoice')?.value;
+    var voices=window.speechSynthesis.getVoices();
+    var voice=voices.find(function(v){return v.name===selVoice;});
+    if(voice)utt.voice=voice;
+  } // في المحاولة الاحتياطية: لا نحدد صوتاً، نترك المتصفح يستخدم الصوت الافتراضي للجهاز
   utt.rate=+(document.getElementById('ttsRate')?.value||1);
   utt.pitch=+(document.getElementById('ttsPitch')?.value||1);
-  utt.onerror=function(e){toast((_lang==='ar'?'تعذّر تشغيل الصوت — خطأ: ':'Could not play — error: ')+e.error,'err');};
+  utt.onerror=function(e){
+    if(isRetry!==true){
+      toast(_lang==='ar'?'فشل الصوت المحدد، تجربة صوت الجهاز الافتراضي...':'Selected voice failed, trying device default voice...','err');
+      ttsSpeak(true);
+    }else{
+      toast((_lang==='ar'?'تعذّر تشغيل الصوت حتى بالصوت الافتراضي — خطأ: ':'Could not play even with default voice — error: ')+e.error,'err');
+    }
+  };
   utt.onstart=function(){toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');};
   window.speechSynthesis.speak(utt); // استدعاء مباشر بدون أي تأخير، حفاظاً على ربط التشغيل بضغطة المستخدم مباشرة (مطلوب في أندرويد كروم)
 }
