@@ -1134,8 +1134,8 @@ function bcSaveToStorage(){
   if(window._bcEditId!==null){
     // Edit mode
     var idx2=_bcStorage.findIndex(function(x){return x.id===window._bcEditId;});
-    if(idx2>=0){_bcStorage[idx2].title=title;_bcStorage[idx2].desc=desc2;_bcStorage[idx2].value=text;}
-    window._bcEditId=null;
+    if(idx2>=0){_bcStorage[idx2].title=title;_bcStorage[idx2].desc=desc2;_bcStorage[idx2].value=text;_bcStorage[idx2].img=window._bcSaveImgUrl||_bcStorage[idx2].img||null;}
+    window._bcEditId=null;window._bcSaveImgUrl=null;
   }else{
     var imgUrl=window._bcSaveImgUrl||null;window._bcSaveImgUrl=null;
   _bcStorage.unshift({id:Date.now(),value:text,title:title,desc:desc2,date:new Date().toLocaleDateString('ar-SA'),img:imgUrl});
