@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PDF Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Global Red Scrollbar - functional drag -->
+<div id="globalSB" style="position:fixed;left:0;top:0;width:14px;height:100%;z-index:9999;touch-action:none;cursor:pointer">
+  <div style="position:absolute;inset:0;background:rgba(229,57,53,0.10);border-right:2px solid rgba(229,57,53,0.5)"></div>
+  <div id="globalThumb" style="position:absolute;left:2px;right:2px;background:#e53935;border-radius:5px;min-height:36px;cursor:grab;touch-action:none;box-shadow:0 2px 6px rgba(229,57,53,0.4)"></div>
+</div>
+
+<!-- TOOLS SCREEN -->
+<div class="screen active" id="s-tools" style="position:relative">
+  <div class="topbar" id="toolsTopbar">
+    <div class="topbar-side">
+      <button class="tb-btn" onclick="openInfo()" title="معلومات">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </button>
+      <button class="tb-btn" onclick="openToolsMenu()" title="القائمة">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="topbar-title">PDF <span>Pro</span></div>
+    <div class="topbar-side">
+      <button class="tb-btn" onclick="openSearch()" title="بحث">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- SEARCH BAR -->
+  <div class="search-bar" id="searchBar">
+    <button class="tb-btn" onclick="closeSearch()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <input type="text" id="searchInput" id="searchPlaceholder" placeholder="ابحث عن أداة..." oninput="doSearch(this.value)">
+  </div>
+  <div class="search-results" id="searchResults"></div>
+
+  <div class="scroll" id="scroll-tools">
+    <div class="tools-body">
+      <div class="section-hd" data-ar="أدوات الذكاء الاصطناعي" data-en="AI Tools">أدوات الذكاء الاصطناعي</div>
+      <div class="tools-grid">
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><span data-ar="مساعد الذكاء" data-en="AI Assistant">مساعد الذكاء</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-teal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ad9d9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div><span data-ar="استخراج نص" data-en="Extract Text">استخراج نص</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-purple"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div><span data-ar="تلخيص" data-en="Summarize">تلخيص</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-green"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><span data-ar="ترجمة" data-en="Translate">ترجمة</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+      </div>
+
+      <div class="section-hd" data-ar="تحويل" data-en="Convert">تحويل</div>
+      <div class="tools-grid">
+        <button class="tool-btn" onclick="openTool('img2pdf')"><div class="t-icon bg-red"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect stroke="#e53935" x="3" y="3" width="18" height="18" rx="2"/><circle stroke="#e53935" cx="8.5" cy="8.5" r="1.5"/><polyline stroke="#e53935" points="21 15 16 10 5 21"/></svg></div><span data-ar="صورة إلى PDF" data-en="Image to PDF">صورة إلى PDF</span></button>
+        <button class="tool-btn" onclick="openTool('pdf2img')"><div class="t-icon bg-orange"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg></div><span data-ar="PDF إلى صورة" data-en="PDF to Image">PDF إلى صورة</span></button>
+        <button class="tool-btn" onclick="openTool('imgconv')"><div class="t-icon bg-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><span data-ar="تحويل صيغ الصور" data-en="Convert Image Format">تحويل صيغ الصور</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-indigo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="17 1 21 5 17 9"/></svg></div><span data-ar="تحويل صيغ الملفات" data-en="Convert File Format">تحويل صيغ الملفات</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+        <button class="tool-btn" onclick="openTool('id2pdf')"><div class="t-icon bg-yellow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><span data-ar="بطاقة إلى PDF" data-en="ID to PDF">بطاقة إلى PDF</span></button>
+      </div>
+
+      <div class="section-hd" data-ar="تعديل" data-en="Edit">تعديل</div>
+      <div class="tools-grid">
+        <button class="tool-btn" onclick="openTool('merge')"><div class="t-icon bg-orange"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div><span data-ar="دمج PDF" data-en="Merge PDF">دمج PDF</span></button>
+        <button class="tool-btn" onclick="openTool('split')"><div class="t-icon bg-red"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div><span data-ar="تقسيم PDF" data-en="Split PDF">تقسيم PDF</span></button>
+        <button class="tool-btn" onclick="openTool('compressImg')"><div class="t-icon bg-green"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="21" y2="3"/><line x1="3" y1="21" x2="14" y2="10"/></svg></div><span data-ar="ضغط الصور" data-en="Compress Images">ضغط الصور</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-lime"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a3e635" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="4 14 10 14 10 20"/></svg></div><span data-ar="ضغط الملفات" data-en="Compress Files">ضغط الملفات</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+        <button class="tool-btn" onclick="openTool('watermark')"><div class="t-icon bg-purple"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div><span data-ar="علامة مائية" data-en="Watermark">علامة مائية</span></button>
+        <button class="tool-btn" onclick="openTool('imgedit')"><div class="t-icon bg-cyan"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div><span data-ar="تعديل الصورة" data-en="Edit Image">تعديل الصورة</span></button>
+        <button class="tool-btn" onclick="openTool('pixelate')"><div class="t-icon bg-indigo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><span data-ar="تحويل إلى بكسل" data-en="Pixelate">تحويل إلى بكسل</span></button>
+        <button class="tool-btn" onclick="openTool('addtext')"><div class="t-icon bg-teal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ad9d9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><span data-ar="إضافة نص" data-en="Add Text">إضافة نص</span></button>
+        <button class="tool-btn" onclick="openTool('signature')"><div class="t-icon bg-pink"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 19.5c0 .8-.7 1.5-1.5 1.5h-13C4.7 21 4 20.3 4 19.5V5c0-.8.7-1.5 1.5-1.5h10L20 8v11.5z"/><path d="M8 13c1 0 2.5-1 3.5-3.5S13 5 14 5"/></svg></div><span data-ar="توقيع رقمي" data-en="Signature">توقيع رقمي</span></button>
+        <button class="tool-btn" onclick="openTool('note')"><div class="t-icon bg-yellow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><span data-ar="ملاحظة" data-en="Note">ملاحظة</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-dark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><span data-ar="قفل PDF" data-en="Lock PDF">قفل PDF</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+      </div>
+
+      <div class="section-hd" data-ar="صوت ولغة" data-en="Audio & Language">صوت ولغة</div>
+      <div class="tools-grid">
+        <button class="tool-btn" onclick="openTool('barcode')"><div class="t-icon bg-green"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="13" y1="7" x2="13" y2="14"/><line x1="16" y1="7" x2="16" y2="17"/></svg></div><span data-ar="قارئ باركود" data-en="Barcode Reader">قارئ باركود</span></button>
+        <button class="tool-btn" onclick="openTool('stt')"><div class="t-icon bg-red"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div><span data-ar="صوت إلى نص" data-en="Speech to Text">صوت إلى نص</span></button>
+        <button class="tool-btn" onclick="openTool('tts')"><div class="t-icon bg-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.8" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div><span data-ar="نص إلى صوت" data-en="Text to Speech">نص إلى صوت</span></button>
+        <button class="tool-btn" onclick="openTool('audioconv')"><div class="t-icon bg-purple"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span data-ar="تحويل صيغة الصوت" data-en="Audio Convert">تحويل صيغة الصوت</span></button>
+      </div>
+
+      <div class="section-hd" data-ar="إدارة" data-en="Manage">إدارة</div>
+      <div class="tools-grid">
+        <button class="tool-btn" onclick="openTool('createpdf')"><div class="t-icon bg-red"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div><span data-ar="إنشاء PDF" data-en="Create PDF">إنشاء PDF</span></button>
+        <button class="tool-btn" onclick="showScreen('files')"><div class="t-icon bg-blue"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><span data-ar="كل الملفات" data-en="All Files">كل الملفات</span></button>
+        <button class="tool-btn" onclick="openTool('folder')"><div class="t-icon bg-yellow"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg></div><span data-ar="إنشاء مجلد" data-en="New Folder">إنشاء مجلد</span></button>
+        <button class="tool-btn dim" onclick="comingSoon()"><div class="t-icon bg-dark"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><span data-ar="طباعة" data-en="Print">طباعة</span><span class="soon-badge" data-ar="قريباً" data-en="Soon">قريباً</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT -->
+<div class="screen" id="s-recent">
+  <div class="topbar"><div class="topbar-title" data-ar="الأخيرة" data-en="Recent">الأخيرة</div></div>
+  <div class="scroll" id="scroll-recent"><div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p data-ar="لا يوجد سجل" data-en="No history yet">لا يوجد سجل</p></div></div>
+</div>
+
+<!-- FILES -->
+<div class="screen" id="s-files">
+  <div class="topbar">
+    <div class="topbar-side"><button class="tb-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button></div>
+    <div class="topbar-title" data-ar="كل الملفات" data-en="All Files">كل الملفات</div>
+    <div class="topbar-side"><button class="tb-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></div>
+  </div>
+  <div class="ftype-bar">
+    <button class="ftype-tab active" onclick="filterFiles('all',this)" data-ar="الكل" data-en="All">الكل</button>
+    <button class="ftype-tab" onclick="filterFiles('pdf',this)">PDF</button>
+    <button class="ftype-tab" onclick="filterFiles('img',this)" data-ar="صور" data-en="Images">صور</button>
+  </div>
+  <div class="scroll" id="scroll-files"><div class="file-list-body" id="fileListBody"><div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><p data-ar="لا توجد ملفات" data-en="No files yet">لا توجد ملفات</p></div></div></div>
+  <button class="fab show" onclick="openTool('img2pdf')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="s-settings">
+  <div class="topbar"><div class="topbar-title" data-ar="الإعدادات" data-en="Settings">الإعدادات</div></div>
+  <div class="scroll" id="scroll-settings">
+    <div class="settings-group" style="margin-top:16px">
+      <div class="setting-row" onclick="toggleTheme()">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></div>
+        <span class="s-label" data-ar="موضوع التطبيق" data-en="Theme">موضوع التطبيق</span>
+        <span class="s-value" id="themeVal">داكن</span>
+        <svg class="s-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="setting-row" onclick="openLangPicker()">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <span class="s-label" data-ar="اللغة" data-en="Language">اللغة</span>
+        <span class="s-value" id="langVal">العربية</span>
+        <svg class="s-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="setting-row" onclick="this.querySelector('.toggle').classList.toggle('on')">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <span class="s-label" data-ar="الإشعارات" data-en="Notifications">الإشعارات</span>
+        <button class="toggle on"></button>
+      </div>
+    </div>
+    <div class="settings-group" style="margin-top:12px">
+      <div class="setting-row" onclick="openInfo()">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <span class="s-label" data-ar="عن التطبيق" data-en="About">عن التطبيق</span>
+        <svg class="s-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="setting-row" onclick="toast('شكراً لك! ⭐','ok')">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <span class="s-label" data-ar="قيّمنا" data-en="Rate Us">قيّمنا</span>
+        <svg class="s-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="setting-row" onclick="toast('شكراً لملاحظاتك!','ok')">
+        <div class="s-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <span class="s-label" data-ar="ملاحظات أو اقتراحات" data-en="Feedback">ملاحظات أو اقتراحات</span>
+        <svg class="s-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+    </div>
+    <div class="settings-ver" id="settingsVer">الإصدار: 1.0.0</div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-tools" onclick="showScreen('tools')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span data-ar="الأدوات" data-en="Tools">الأدوات</span></button>
+  <button class="nav-item" id="nav-recent" onclick="showScreen('recent')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span data-ar="الأخيرة" data-en="Recent">الأخيرة</span></button>
+  <button class="nav-item" id="nav-files" onclick="showScreen('files')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span data-ar="الملفات" data-en="Files">الملفات</span></button>
+  <button class="nav-item" id="nav-settings" onclick="showScreen('settings')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-ar="الإعدادات" data-en="Settings">الإعدادات</span></button>
+</nav>
+
+<!-- TOOL SHEET -->
+<div class="overlay" id="overlay" onclick="overlayBg(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hd">
+      <button class="sheet-close" onclick="closeSheet()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <span class="sheet-hd-title" id="sheetTitle"></span>
+      <div style="width:28px"></div>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<!-- INFO BOX -->
+<div class="info-overlay" id="infoOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="info-box">
+    <h3 id="infoTitle">PDF Pro</h3>
+    <p id="infoDesc">تطبيق متكامل لإدارة ملفات PDF والصور. يعمل بالكامل على جهازك بدون إنترنت وبدون رفع ملفاتك لأي سيرفر.</p>
+    <p id="infoVer" style="margin-top:8px">الإصدار: 1.0.0 | جميع الحقوق محفوظة</p>
+    <button id="infoBtnOk" class="info-close" onclick="document.getElementById('infoOverlay').classList.remove('open')">حسناً</button>
+  </div>
+</div>
+
+<!-- LANG PICKER -->
+<div class="lang-overlay" id="langOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="lang-box">
+    <h3>اختر اللغة / Choose Language</h3>
+    <div class="lang-opt selected" id="langAr" onclick="setLang('ar')">
+      <div class="lo-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div>
+        <div style="font-size:14px;font-weight:600">العربية</div>
+        <div style="font-size:12px;color:var(--text2)">Arabic</div>
+      </div>
+    </div>
+    <div style="height:8px"></div>
+    <div class="lang-opt" id="langEn" onclick="setLang('en')">
+      <div class="lo-check"></div>
+      <div>
+        <div style="font-size:14px;font-weight:600">English</div>
+        <div style="font-size:12px;color:var(--text2)">الإنجليزية</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLS MENU -->
+<div class="info-overlay" id="menuOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="info-box" style="padding:0;overflow:hidden">
+    <div style="padding:16px;border-bottom:1px solid var(--border);font-size:15px;font-weight:700" data-ar="القائمة" data-en="Menu">القائمة</div>
+    <div class="setting-row" onclick="showScreen('files');document.getElementById('menuOverlay').classList.remove('open')"><span data-ar="كل الملفات" data-en="All Files">كل الملفات</span></div>
+    <div class="setting-row" onclick="showScreen('settings');document.getElementById('menuOverlay').classList.remove('open')"><span data-ar="الإعدادات" data-en="Settings">الإعدادات</span></div>
+    <div class="setting-row" onclick="openInfo();document.getElementById('menuOverlay').classList.remove('open')"><span data-ar="عن التطبيق" data-en="About">عن التطبيق</span></div>
+    <div class="setting-row" style="border:none" onclick="document.getElementById('menuOverlay').classList.remove('open')"><span style="color:var(--text3)" data-ar="إغلاق" data-en="Close">إغلاق</span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
