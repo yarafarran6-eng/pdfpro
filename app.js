@@ -1022,6 +1022,12 @@ function buildBarcode(){
     s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
     document.head.appendChild(s);
   }
+  // Load QR generator (for displaying scannable codes in storage)
+  if(!window.QRCode){
+    var s3=document.createElement('script');
+    s3.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+    document.head.appendChild(s3);
+  }
 
   document.getElementById('bcImgIn').addEventListener('change',function(e){
     var f=e.target.files[0];if(!f)return;
@@ -1120,10 +1126,13 @@ function bcSaveToStorage(){
   _bcStorage.unshift({id:Date.now(),value:text,title:title,desc:desc2,date:new Date().toLocaleDateString('ar-SA'),img:imgUrl});
   }
   localStorage.setItem('bcStore',JSON.stringify(_bcStorage));
-  toast(_lang==='ar'?'تم الحفظ في المخزن':'Saved to storage','ok');
   document.getElementById('bcSaveTitle').value='';document.getElementById('bcSaveDesc').value='';
   var lbl=document.getElementById('bcImgLabel');if(lbl)lbl.textContent=_lang==='ar'?'اختر صورة...':'Choose image...';
   var el=document.getElementById('bcSaveImgEl');if(el){el.src='';el.style.display='none';}
+  document.getElementById('bcResult').style.display='none';
+  document.getElementById('bcText').textContent='';
+  toast(_lang==='ar'?'تم الحفظ في المخزن':'Saved to storage','ok');
+  bcShowTab('store');
 }
 
 function bcRenderStore(){
@@ -1144,6 +1153,7 @@ function bcRenderStore(){
       +'<button onclick="bcDeleteItem('+item.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:6px 8px;font-size:16px">✕</button>'
       +'</div>'
       +'</div>'
+      +'<div style="text-align:center;background:#fff;border-radius:8px;padding:10px;margin-bottom:8px"><canvas id="bcQr_'+item.id+'"></canvas></div>'
       +(item.img?'<img src="'+item.img+'" style="width:100%;max-height:110px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">':'')
       +'<div style="background:var(--card2);border-radius:6px;padding:8px;font-size:12px;color:var(--text);word-break:break-all;margin-bottom:8px">'+item.value+'</div>'
       +'<div style="display:flex;gap:6px">'
@@ -1152,6 +1162,15 @@ function bcRenderStore(){
       +'</div>'
       +'</div>';
   }).join('');
+  bcRenderQRs();
+}
+
+function bcRenderQRs(){
+  if(!window.QRCode){setTimeout(bcRenderQRs,300);return;}
+  _bcStorage.forEach(function(item){
+    var cv=document.getElementById('bcQr_'+item.id);
+    if(cv)QRCode.toCanvas(cv,item.value,{width:160,margin:1},function(){});
+  });
 }
 
 function bcEditItem(id){
@@ -1234,6 +1253,7 @@ function buildTTS(){
       <div class="field">
         <label>${_lang==='ar'?'الصوت:':'Voice:'}</label>
         <select id="ttsVoice" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit"></select>
+        <div id="ttsVoiceInfo" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
       </div>
       <div class="slider-row"><label>${_lang==='ar'?'السرعة':'Speed'}</label><input type="range" id="ttsRate" min="0.5" max="2" value="1" step="0.1" style="flex:1;accent-color:var(--red)" oninput="document.getElementById('ttsRateV').textContent=this.value+'x'"><span class="slider-val" id="ttsRateV">1x</span></div>
       <div class="slider-row"><label>${_lang==='ar'?'النبرة':'Pitch'}</label><input type="range" id="ttsPitch" min="0.5" max="2" value="1" step="0.1" style="flex:1;accent-color:var(--red)" oninput="document.getElementById('ttsPitchV').textContent=this.value"><span class="slider-val" id="ttsPitchV">1</span></div>
@@ -1251,7 +1271,7 @@ function buildTTS(){
   if(!window.speechSynthesis){
     toast(_lang==='ar'?'المتصفح لا يدعم هذه الميزة':'Browser not supported','err');return;
   }
-  function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'جاري التحميل...':'Loading...')+'</option>';return;}voices.sort(function(a,b){var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o);});}
+  function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';var info=document.getElementById('ttsVoiceInfo');if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'لا يوجد صوت':'No voice')+'</option>';if(info)info.innerHTML=_lang==='ar'?'⚠️ لم يُعثر على أي صوت TTS على هذا الجهاز. هذا إعداد على مستوى نظام أندرويد وليس بالموقع: افتح إعدادات الجهاز ← إدارة عامة (أو إمكانية الوصول) ← تحويل النص إلى كلام، وتأكد من وجود محرك مُفعّل وبيانات صوتية مُحمّلة.':'⚠️ No TTS voice found on this device. This is an Android system setting, not the website: open device Settings → General management (or Accessibility) → Text-to-speech output, and make sure an engine is enabled with voice data installed.';return;}if(info)info.textContent=(_lang==='ar'?('تم العثور على '+voices.length+' صوت متاح'):('Found '+voices.length+' voices available'));voices.sort(function(a,b){var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o);});}
   window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
 }
 
@@ -1273,6 +1293,11 @@ function ttsSpeak(){
   utt.onstart=function(){toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');};
   window.speechSynthesis.resume();
   setTimeout(function(){window.speechSynthesis.speak(utt);},60);
+  setTimeout(function(){
+    if(!window.speechSynthesis.speaking){
+      toast(_lang==='ar'?'لم يبدأ الصوت فعلياً. السبب الأرجح: لا يوجد محرك تحويل نص-إلى-كلام مُفعّل على هذا الجهاز (إعداد أندرويد، ليس مشكلة بالموقع)':'Audio did not actually start. Likely cause: no text-to-speech engine enabled on this device (Android setting, not a website issue)','err');
+    }
+  },1500);
 }
 
 // ══ تحويل صيغة الصوت ══
