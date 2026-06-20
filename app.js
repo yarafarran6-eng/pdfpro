@@ -978,6 +978,14 @@ function buildBarcode(){
           <video id="bcVideo" style="width:100%;border-radius:8px;background:#000;max-height:260px;object-fit:cover" autoplay playsinline muted></video>
           <button onclick="bcStopCamera()" style="width:100%;margin-top:8px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text3);font-family:inherit;font-size:13px;cursor:pointer">${_lang==='ar'?'إيقاف الكاميرا':'Stop Camera'}</button>
         </div>
+        <div id="bcCaptureConfirm" style="display:none;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${_lang==='ar'?'تم اكتشاف باركود — تأكد أن الصورة واضحة:':'Barcode detected — make sure the image is clear:'}</div>
+          <img id="bcCaptureImg" style="width:100%;border-radius:8px;margin-bottom:10px;border:1px solid var(--border)">
+          <div style="display:flex;gap:8px">
+            <button onclick="bcConfirmRetry()" style="flex:1;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">${_lang==='ar'?'إعادة المسح':'Rescan'}</button>
+            <button onclick="bcConfirmUse()" style="flex:1;padding:12px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">${_lang==='ar'?'استخدام هذه الصورة':'Use This Image'}</button>
+          </div>
+        </div>
         <canvas id="bcCanvas" style="display:none"></canvas>
       </div>
 
@@ -1113,7 +1121,7 @@ function bcScanLoop(){
     if(window.jsQR){
       var imgData=cv.getContext('2d').getImageData(0,0,cv.width,cv.height);
       var code=jsQR(imgData.data,imgData.width,imgData.height);
-      if(code){bcStopCamera();bcShowResult(code.data);return;}
+      if(code){bcStopCamera();bcShowCaptureConfirm(code.data);return;}
     }
   }
   if(_bcStream)requestAnimationFrame(bcScanLoop);
@@ -1121,6 +1129,24 @@ function bcScanLoop(){
 function bcStopCamera(){
   if(_bcStream){_bcStream.getTracks().forEach(function(t){t.stop();});_bcStream=null;}
   var w=document.getElementById('bcCameraWrap');if(w)w.style.display='none';
+}
+var _bcPendingCode=null;
+function bcShowCaptureConfirm(code){
+  _bcPendingCode=code;
+  var cv=document.getElementById('bcCanvas');
+  var img=document.getElementById('bcCaptureImg');
+  if(cv&&img)img.src=cv.toDataURL('image/jpeg',0.9);
+  var c=document.getElementById('bcCaptureConfirm');if(c)c.style.display='block';
+}
+function bcConfirmUse(){
+  var c=document.getElementById('bcCaptureConfirm');if(c)c.style.display='none';
+  if(_bcPendingCode)bcShowResult(_bcPendingCode);
+  _bcPendingCode=null;
+}
+function bcConfirmRetry(){
+  var c=document.getElementById('bcCaptureConfirm');if(c)c.style.display='none';
+  _bcPendingCode=null;
+  bcStartCamera();
 }
 
 // ── Storage ──
