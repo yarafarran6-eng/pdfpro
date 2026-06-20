@@ -1022,12 +1022,6 @@ function buildBarcode(){
     s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
     document.head.appendChild(s);
   }
-  // Load QR generator (for displaying scannable codes in storage)
-  if(!window.QRCode){
-    var s3=document.createElement('script');
-    s3.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-    document.head.appendChild(s3);
-  }
 
   document.getElementById('bcImgIn').addEventListener('change',function(e){
     var f=e.target.files[0];if(!f)return;
@@ -1080,7 +1074,17 @@ function bcShowResult(text){
   txt.textContent=text;res.style.display='block';
   var isURL=/^https?:\/\//i.test(text);
   if(openBtn){openBtn.style.display=isURL?'block':'none';openBtn.onclick=function(){window.open(text,'_blank');};}
-  toast(_lang==='ar'?'تم قراءة الباركود ✓':'Barcode detected ✓','ok');
+  // التقاط الصورة الأصلية (من الكاميرا وقت الاكتشاف، أو من الصورة المرفوعة) تلقائياً لتُحفظ كما هي
+  var cv=document.getElementById('bcCanvas');
+  if(cv&&cv.width>0){
+    try{
+      window._bcSaveImgUrl=cv.toDataURL('image/jpeg',0.85);
+      var el=document.getElementById('bcSaveImgEl');var lbl=document.getElementById('bcImgLabel');
+      if(el){el.src=window._bcSaveImgUrl;el.style.display='block';}
+      if(lbl)lbl.textContent=_lang==='ar'?'تم التقاط الصورة تلقائياً (اضغط لتغييرها)':'Image captured automatically (tap to change)';
+    }catch(e){}
+  }
+  toast(_lang==='ar'?'تم قراءة الباركود':'Barcode detected','ok');
 }
 
 var _bcStream=null;
@@ -1153,8 +1157,7 @@ function bcRenderStore(){
       +'<button onclick="bcDeleteItem('+item.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:6px 8px;font-size:16px">✕</button>'
       +'</div>'
       +'</div>'
-      +'<div style="text-align:center;background:#fff;border-radius:8px;padding:10px;margin-bottom:8px"><img id="bcQr_'+item.id+'" style="width:160px;height:160px;display:none" alt="QR"><div id="bcQrLoad_'+item.id+'" style="font-size:11px;color:#999">'+(_lang==='ar'?'جاري إنشاء الصورة...':'Generating image...')+'</div></div>'
-      +(item.img?'<img src="'+item.img+'" style="width:100%;max-height:110px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">':'')
+      +(item.img?'<img src="'+item.img+'" style="width:100%;max-height:240px;object-fit:contain;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;background:#fff">':'')
       +'<div style="background:var(--card2);border-radius:6px;padding:8px;font-size:12px;color:var(--text);word-break:break-all;margin-bottom:8px">'+item.value+'</div>'
       +'<div style="display:flex;gap:6px">'
       +'<button onclick="navigator.clipboard.writeText(\''+item.value.replace(/'/g,"\\'")+'\')" style="flex:1;padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:inherit;font-size:11px;cursor:pointer"> '+(_lang==='ar'?'نسخ':'Copy')+'</button>'
@@ -1162,29 +1165,6 @@ function bcRenderStore(){
       +'</div>'
       +'</div>';
   }).join('');
-  bcRenderQRs();
-}
-
-var _bcQrRetries=0;
-function bcRenderQRs(){
-  if(!window.QRCode){
-    _bcQrRetries++;
-    if(_bcQrRetries>15){
-      _bcStorage.forEach(function(item){var l=document.getElementById('bcQrLoad_'+item.id);if(l)l.textContent=_lang==='ar'?'تعذّر تحميل مولّد الباركود (تحقق من الاتصال بالإنترنت)':'Failed to load barcode generator (check internet connection)';});
-      return;
-    }
-    setTimeout(bcRenderQRs,300);return;
-  }
-  _bcQrRetries=0;
-  _bcStorage.forEach(function(item){
-    var img=document.getElementById('bcQr_'+item.id),load=document.getElementById('bcQrLoad_'+item.id);
-    if(!img)return;
-    QRCode.toDataURL(item.value,{width:160,margin:1},function(err,url){
-      if(err){if(load)load.textContent=_lang==='ar'?'تعذّر إنشاء صورة الباركود':'Could not generate barcode image';return;}
-      img.src=url;img.style.display='inline-block';
-      if(load)load.style.display='none';
-    });
-  });
 }
 
 function bcEditItem(id){
@@ -1303,15 +1283,9 @@ function ttsSpeak(){
   if(voice)utt.voice=voice;
   utt.rate=+(document.getElementById('ttsRate')?.value||1);
   utt.pitch=+(document.getElementById('ttsPitch')?.value||1);
-  utt.onerror=function(e){toast(_lang==='ar'?'تعذّر تشغيل الصوت — تأكد أن مستوى صوت الجهاز (الوسائط) غير صفر':'Could not play — check device media volume is not muted','err');};
+  utt.onerror=function(e){toast((_lang==='ar'?'تعذّر تشغيل الصوت — خطأ: ':'Could not play — error: ')+e.error,'err');};
   utt.onstart=function(){toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');};
-  window.speechSynthesis.resume();
-  setTimeout(function(){window.speechSynthesis.speak(utt);},60);
-  setTimeout(function(){
-    if(!window.speechSynthesis.speaking){
-      toast(_lang==='ar'?'لم يبدأ الصوت فعلياً. السبب الأرجح: لا يوجد محرك تحويل نص-إلى-كلام مُفعّل على هذا الجهاز (إعداد أندرويد، ليس مشكلة بالموقع)':'Audio did not actually start. Likely cause: no text-to-speech engine enabled on this device (Android setting, not a website issue)','err');
-    }
-  },1500);
+  window.speechSynthesis.speak(utt); // استدعاء مباشر بدون أي تأخير، حفاظاً على ربط التشغيل بضغطة المستخدم مباشرة (مطلوب في أندرويد كروم)
 }
 
 // ══ تحويل صيغة الصوت ══
