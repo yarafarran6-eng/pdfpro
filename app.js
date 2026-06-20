@@ -240,7 +240,6 @@ const ALL_TOOLS=[
   {ar:'تحويل إلى بكسل',en:'Pixelate Image',id:'pixelate'},
   {ar:'قارئ باركود',en:'Barcode Reader',id:'barcode'},
   {ar:'صوت إلى نص',en:'Speech to Text',id:'stt'},
-  {ar:'نص إلى صوت',en:'Text to Speech',id:'tts'},
   {ar:'تحويل صيغة الصوت',en:'Audio Convert',id:'audioconv'},
   {ar:'إضافة نص',en:'Add Text',id:'addtext'},
   {ar:'توقيع رقمي',en:'Signature',id:'signature'},
@@ -294,7 +293,6 @@ const TOOLS={
   folder:[{ar:'إنشاء مجلد',en:'New Folder'},buildFolder],
   barcode:[{ar:'قارئ باركود',en:'Barcode Reader'},buildBarcode],
   stt:[{ar:'صوت إلى نص',en:'Speech to Text'},buildSTT],
-  tts:[{ar:'نص إلى صوت',en:'Text to Speech'},buildTTS],
   audioconv:[{ar:'تحويل صيغة الصوت',en:'Audio Convert'},buildAudioConv],
 };
 function openTool(id){const t=TOOLS[id];if(!t)return;openSheet(_lang==='ar'?t[0].ar:t[0].en,t[1]);}
@@ -1244,68 +1242,6 @@ function sttToggle(){
   _sttRec.onerror=function(e){_sttActive=false;var btn=document.getElementById('sttBtn');if(btn){btn.textContent=_lang==='ar'?'ابدأ التسجيل':'Start Recording';btn.style.background='var(--red)';}if(e.error==='not-allowed'){var st=document.getElementById('sttStatus');if(st)st.textContent=_lang==='ar'?'يحتاج رابط https — ارفع الملف على Netlify.com مجاناً':'Needs https — upload file to Netlify.com for free';}else{toast('Error: '+e.error,'err');}};
   _sttRec.onend=function(){_sttActive=false;var btn=document.getElementById('sttBtn');if(btn){btn.textContent=''+(_lang==='ar'?'ابدأ التسجيل':'Start Recording');btn.style.background='var(--red)';}var st=document.getElementById('sttStatus');if(st)st.textContent=''+(_lang==='ar'?'انتهى التسجيل':'Recording ended');};
   _sttRec.start();
-}
-
-// ══ نص إلى صوت ══
-function buildTTS(){
-  document.getElementById('sheetBody').innerHTML=`
-    ${desc('اكتب أي نص والتطبيق يقرأه بصوت.','Type any text and the app reads it aloud.')}
-    <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div class="field">
-        <label>${_lang==='ar'?'النص:':'Text:'}</label>
-        <textarea id="ttsInput" rows="5" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;resize:vertical" placeholder="${_lang==='ar'?'اكتب النص هنا...':'Type text here...'}"></textarea>
-      </div>
-      <div class="field">
-        <label>${_lang==='ar'?'الصوت:':'Voice:'}</label>
-        <select id="ttsVoice" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit"></select>
-        <div id="ttsVoiceInfo" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
-      </div>
-      <div class="slider-row"><label>${_lang==='ar'?'السرعة':'Speed'}</label><input type="range" id="ttsRate" min="0.5" max="2" value="1" step="0.1" style="flex:1;accent-color:var(--red)" oninput="document.getElementById('ttsRateV').textContent=this.value+'x'"><span class="slider-val" id="ttsRateV">1x</span></div>
-      <div class="slider-row"><label>${_lang==='ar'?'النبرة':'Pitch'}</label><input type="range" id="ttsPitch" min="0.5" max="2" value="1" step="0.1" style="flex:1;accent-color:var(--red)" oninput="document.getElementById('ttsPitchV').textContent=this.value"><span class="slider-val" id="ttsPitchV">1</span></div>
-      <div style="display:flex;gap:8px">
-        <button onclick="ttsSpeak()" class="action-btn" style="flex:2;margin:0">${_lang==='ar'?'تشغيل':'Play'}</button>
-        <button onclick="window.speechSynthesis&&window.speechSynthesis.pause()" style="flex:1;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">⏸</button>
-        <button onclick="window.speechSynthesis&&window.speechSynthesis.cancel()" style="flex:1;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">⏹</button>
-      </div>
-    </div>
-    <div style="background:var(--card);border-radius:10px;padding:14px">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">${_lang==='ar'?'تحميل أصوات إضافية:':'Download More Voices:'}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${_lang==='ar'?'حمّل أصوات إضافية لتظهر تلقائياً في القائمة':'Install voices to appear automatically in the list'}</div>
-      ${[{name:'Google TTS (عربي/Arabic)',url:'https://play.google.com/store/apps/details?id=com.google.android.tts'},{name:'Vocalizer Arabic',url:'https://play.google.com/store/apps/details?id=es.codefactory.vocalizertts'},{name:'Samsung TTS',url:'https://play.google.com/store/apps/details?id=com.samsung.SMT'},{name:'Microsoft TTS',url:'https://play.google.com/store/apps/details?id=com.microsoft.tts'},{name:'RHVoice Arabic',url:'https://play.google.com/store/apps/details?id=com.github.olga_yakovleva.rhvoice.android'}].map(v=>`<a href="${v.url}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;background:var(--card2);border-radius:8px;text-decoration:none;border:1px solid var(--border)"><span style="font-size:13px;color:var(--text);flex:1">${v.name}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`).join('')}
-    </div>`;
-  if(!window.speechSynthesis){
-    toast(_lang==='ar'?'المتصفح لا يدعم هذه الميزة':'Browser not supported','err');return;
-  }
-  function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';var info=document.getElementById('ttsVoiceInfo');if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'لا يوجد صوت':'No voice')+'</option>';if(info)info.innerHTML=_lang==='ar'?'⚠️ لم يُعثر على أي صوت TTS على هذا الجهاز. هذا إعداد على مستوى نظام أندرويد وليس بالموقع: افتح إعدادات الجهاز ← إدارة عامة (أو إمكانية الوصول) ← تحويل النص إلى كلام، وتأكد من وجود محرك مُفعّل وبيانات صوتية مُحمّلة.':'⚠️ No TTS voice found on this device. This is an Android system setting, not the website: open device Settings → General management (or Accessibility) → Text-to-speech output, and make sure an engine is enabled with voice data installed.';return;}if(info)info.textContent=(_lang==='ar'?('تم العثور على '+voices.length+' صوت متاح'):('Found '+voices.length+' voices available'));voices.sort(function(a,b){var aL=a.localService,bL=b.localService;if(aL&&!bL)return -1;if(!aL&&bL)return 1;var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+') '+(v.localService?(_lang==='ar'?'[محلي]':'[Local]'):(_lang==='ar'?'[شبكة]':'[Network]'));sel.appendChild(o);});var firstLocal=voices.find(function(v){return v.localService;});if(firstLocal)sel.value=firstLocal.name;}
-  window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
-}
-
-var _ttsUtt=null;
-function ttsSpeak(isRetry){
-  if(!window.speechSynthesis){toast(_lang==='ar'?'غير مدعوم في هذا المتصفح':'Not supported in this browser','err');return;}
-  var text=document.getElementById('ttsInput')?.value?.trim();
-  if(!text){toast(_lang==='ar'?'اكتب نصاً أولاً':'Write text first','err');return;}
-  window.speechSynthesis.cancel();
-  var utt=new SpeechSynthesisUtterance(text);
-  _ttsUtt=utt; // إبقاء مرجع حي للكائن لتفادي حذفه من الذاكرة (Garbage Collection) قبل انتهاء النطق على متصفحات أندرويد
-  if(isRetry!==true){
-    var selVoice=document.getElementById('ttsVoice')?.value;
-    var voices=window.speechSynthesis.getVoices();
-    var voice=voices.find(function(v){return v.name===selVoice;});
-    if(voice)utt.voice=voice;
-  } // في المحاولة الاحتياطية: لا نحدد صوتاً، نترك المتصفح يستخدم الصوت الافتراضي للجهاز
-  utt.rate=+(document.getElementById('ttsRate')?.value||1);
-  utt.pitch=+(document.getElementById('ttsPitch')?.value||1);
-  utt.onerror=function(e){
-    if(isRetry!==true){
-      toast(_lang==='ar'?'فشل الصوت المحدد، تجربة صوت الجهاز الافتراضي...':'Selected voice failed, trying device default voice...','err');
-      ttsSpeak(true);
-    }else{
-      toast((_lang==='ar'?'تعذّر تشغيل الصوت حتى بالصوت الافتراضي — خطأ: ':'Could not play even with default voice — error: ')+e.error,'err');
-    }
-  };
-  utt.onstart=function(){toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');};
-  window.speechSynthesis.speak(utt); // استدعاء مباشر بدون أي تأخير، حفاظاً على ربط التشغيل بضغطة المستخدم مباشرة (مطلوب في أندرويد كروم)
 }
 
 // ══ تحويل صيغة الصوت ══
