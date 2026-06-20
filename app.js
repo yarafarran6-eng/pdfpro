@@ -1153,7 +1153,7 @@ function bcRenderStore(){
       +'<button onclick="bcDeleteItem('+item.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:6px 8px;font-size:16px">✕</button>'
       +'</div>'
       +'</div>'
-      +'<div style="text-align:center;background:#fff;border-radius:8px;padding:10px;margin-bottom:8px"><canvas id="bcQr_'+item.id+'"></canvas></div>'
+      +'<div style="text-align:center;background:#fff;border-radius:8px;padding:10px;margin-bottom:8px"><img id="bcQr_'+item.id+'" style="width:160px;height:160px;display:none" alt="QR"><div id="bcQrLoad_'+item.id+'" style="font-size:11px;color:#999">'+(_lang==='ar'?'جاري إنشاء الصورة...':'Generating image...')+'</div></div>'
       +(item.img?'<img src="'+item.img+'" style="width:100%;max-height:110px;object-fit:contain;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">':'')
       +'<div style="background:var(--card2);border-radius:6px;padding:8px;font-size:12px;color:var(--text);word-break:break-all;margin-bottom:8px">'+item.value+'</div>'
       +'<div style="display:flex;gap:6px">'
@@ -1165,11 +1165,25 @@ function bcRenderStore(){
   bcRenderQRs();
 }
 
+var _bcQrRetries=0;
 function bcRenderQRs(){
-  if(!window.QRCode){setTimeout(bcRenderQRs,300);return;}
+  if(!window.QRCode){
+    _bcQrRetries++;
+    if(_bcQrRetries>15){
+      _bcStorage.forEach(function(item){var l=document.getElementById('bcQrLoad_'+item.id);if(l)l.textContent=_lang==='ar'?'تعذّر تحميل مولّد الباركود (تحقق من الاتصال بالإنترنت)':'Failed to load barcode generator (check internet connection)';});
+      return;
+    }
+    setTimeout(bcRenderQRs,300);return;
+  }
+  _bcQrRetries=0;
   _bcStorage.forEach(function(item){
-    var cv=document.getElementById('bcQr_'+item.id);
-    if(cv)QRCode.toCanvas(cv,item.value,{width:160,margin:1},function(){});
+    var img=document.getElementById('bcQr_'+item.id),load=document.getElementById('bcQrLoad_'+item.id);
+    if(!img)return;
+    QRCode.toDataURL(item.value,{width:160,margin:1},function(err,url){
+      if(err){if(load)load.textContent=_lang==='ar'?'تعذّر إنشاء صورة الباركود':'Could not generate barcode image';return;}
+      img.src=url;img.style.display='inline-block';
+      if(load)load.style.display='none';
+    });
   });
 }
 
