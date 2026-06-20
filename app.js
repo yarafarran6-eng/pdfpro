@@ -1011,6 +1011,7 @@ function buildBarcode(){
 
     <!-- STORAGE PANEL -->
     <div id="bcPanelStore" style="display:none">
+      <button onclick="bcShowTab('scan')" style="width:100%;padding:12px;margin-bottom:12px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">+ ${_lang==='ar'?'إضافة باركود جديد':'Add New Barcode'}</button>
       <div id="bcStoreList"></div>
     </div>
   `;
@@ -1175,11 +1176,6 @@ function bcDeleteItem(id){
 function buildSTT(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('تكلم والتطبيق يكتب ما تقوله. يدعم العربي والإنجليزي.','Speak and the app writes what you say.')}
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="sttTabLive" onclick="sttShowTab('live')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--red);background:rgba(229,57,53,0.1);color:var(--red);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'تسجيل مباشر':'Live Recording'}</button>
-      <button id="sttTabFile" onclick="sttShowTab('file')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--card2);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'ملف صوتي':'Audio File'}</button>
-    </div>
-    <div id="sttPanelLive">
     <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
       <div class="field">
         <label>${_lang==='ar'?'اللغة:':'Language:'}</label>
@@ -1195,19 +1191,6 @@ function buildSTT(){
       </button>
       <div id="sttStatus" style="text-align:center;font-size:12px;color:var(--text3);margin-top:8px"></div>
     </div>
-    </div>
-    <div id="sttPanelFile" style="display:none">
-    <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
-      <label style="display:block;padding:16px;background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;color:var(--text2);font-size:13px;text-align:center;cursor:pointer;margin-bottom:12px">
-        ${_lang==='ar'?'اضغط لاختيار ملف صوتي من جهازك':'Tap to choose an audio file from your device'}
-        <input type="file" id="sttAudioIn" accept="audio/*" style="display:none">
-      </label>
-      <div id="sttFilePlayer" style="display:none;margin-bottom:10px">
-        <audio id="sttAudioPlayer" controls style="width:100%;border-radius:8px"></audio>
-      </div>
-      <div style="font-size:11px;color:var(--text3);background:var(--card2);border-radius:8px;padding:10px;line-height:1.6">${_lang==='ar'?'التفريغ الآلي الكامل للملفات المرفوعة غير مدعوم تقنياً في المتصفح حالياً. استخدم تبويب "تسجيل مباشر" وشغّل الملف بجانب الميكروفون، أو سجّل صوتك مباشرة.':'Full automatic transcription of uploaded files is not technically supported in-browser yet. Use the "Live Recording" tab and play the file near the microphone, or record your voice directly.'}</div>
-    </div>
-    </div>
     <div style="background:var(--card);border-radius:10px;padding:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <label style="font-size:13px;font-weight:600;color:var(--text)">${_lang==='ar'?'النص:':'Text:'}</label>
@@ -1222,25 +1205,6 @@ function buildSTT(){
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
     toast(_lang==='ar'?'استخدم Chrome للحصول على هذه الميزة':'Use Chrome for this feature','err');
   }
-  setTimeout(function(){
-    var ain=document.getElementById('sttAudioIn');
-    if(ain)ain.addEventListener('change',function(e){
-      var f=e.target.files[0];if(!f)return;
-      var p=document.getElementById('sttAudioPlayer'),w=document.getElementById('sttFilePlayer');
-      if(p)p.src=URL.createObjectURL(f);
-      if(w)w.style.display='block';
-    });
-  },100);
-}
-
-function sttShowTab(t){
-  var isLive=t==='live';
-  var bl=document.getElementById('sttTabLive'),bf=document.getElementById('sttTabFile');
-  if(bl){bl.style.borderColor=isLive?'var(--red)':'var(--border)';bl.style.background=isLive?'rgba(229,57,53,0.1)':'var(--card2)';bl.style.color=isLive?'var(--red)':'var(--text2)';}
-  if(bf){bf.style.borderColor=!isLive?'var(--red)':'var(--border)';bf.style.background=!isLive?'rgba(229,57,53,0.1)':'var(--card2)';bf.style.color=!isLive?'var(--red)':'var(--text2)';}
-  var pl=document.getElementById('sttPanelLive'),pf=document.getElementById('sttPanelFile');
-  if(pl)pl.style.display=isLive?'block':'none';
-  if(pf)pf.style.display=!isLive?'block':'none';
 }
 
 var _sttRec=null,_sttActive=false;
@@ -1261,12 +1225,7 @@ function sttToggle(){
 // ══ نص إلى صوت ══
 function buildTTS(){
   document.getElementById('sheetBody').innerHTML=`
-    ${desc('اكتب أي نص والتطبيق يقرأه بصوت، أو ارفع ملف صوتي لتشغيله.','Type text to read aloud, or upload an audio file to play.')}
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="ttsTabText" onclick="ttsShowTab('text')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--red);background:rgba(229,57,53,0.1);color:var(--red);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'نص إلى صوت':'Text to Speech'}</button>
-      <button id="ttsTabFile" onclick="ttsShowTab('file')" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--card2);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${_lang==='ar'?'تشغيل ملف صوتي':'Play Audio File'}</button>
-    </div>
-    <div id="ttsPanelText">
+    ${desc('اكتب أي نص والتطبيق يقرأه بصوت.','Type any text and the app reads it aloud.')}
     <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px">
       <div class="field">
         <label>${_lang==='ar'?'النص:':'Text:'}</label>
@@ -1284,17 +1243,6 @@ function buildTTS(){
         <button onclick="window.speechSynthesis&&window.speechSynthesis.cancel()" style="flex:1;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">⏹</button>
       </div>
     </div>
-    <div id="ttsPanelFile" style="display:none">
-    <div style="background:var(--card);border-radius:10px;padding:14px">
-      <label style="display:block;padding:16px;background:var(--card2);border:1.5px dashed var(--border);border-radius:10px;color:var(--text2);font-size:13px;text-align:center;cursor:pointer;margin-bottom:12px">
-        ${_lang==='ar'?'اضغط لاختيار ملف صوتي من جهازك':'Tap to choose an audio file from your device'}
-        <input type="file" id="ttsAudioIn" accept="audio/*" style="display:none">
-      </label>
-      <div id="ttsFilePlayer" style="display:none">
-        <audio id="ttsAudioPlayer" controls style="width:100%;border-radius:8px"></audio>
-      </div>
-    </div>
-    </div>
     <div style="background:var(--card);border-radius:10px;padding:14px">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">${_lang==='ar'?'تحميل أصوات إضافية:':'Download More Voices:'}</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${_lang==='ar'?'حمّل أصوات إضافية لتظهر تلقائياً في القائمة':'Install voices to appear automatically in the list'}</div>
@@ -1305,41 +1253,26 @@ function buildTTS(){
   }
   function loadVoices(){var sel=document.getElementById('ttsVoice');if(!sel)return;var voices=window.speechSynthesis.getVoices();sel.innerHTML='';if(!voices.length){sel.innerHTML='<option>'+(_lang==='ar'?'جاري التحميل...':'Loading...')+'</option>';return;}voices.sort(function(a,b){var aA=a.lang.startsWith('ar'),bA=b.lang.startsWith('ar');if(aA&&!bA)return -1;if(!aA&&bA)return 1;return 0;});voices.forEach(function(v){var o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o);});}
   window.speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
-  setTimeout(function(){
-    var ain=document.getElementById('ttsAudioIn');
-    if(ain)ain.addEventListener('change',function(e){
-      var f=e.target.files[0];if(!f)return;
-      var p=document.getElementById('ttsAudioPlayer'),w=document.getElementById('ttsFilePlayer');
-      if(p)p.src=URL.createObjectURL(f);
-      if(w)w.style.display='block';
-    });
-  },100);
 }
 
-function ttsShowTab(t){
-  var isText=t==='text';
-  var bt=document.getElementById('ttsTabText'),bf=document.getElementById('ttsTabFile');
-  if(bt){bt.style.borderColor=isText?'var(--red)':'var(--border)';bt.style.background=isText?'rgba(229,57,53,0.1)':'var(--card2)';bt.style.color=isText?'var(--red)':'var(--text2)';}
-  if(bf){bf.style.borderColor=!isText?'var(--red)':'var(--border)';bf.style.background=!isText?'rgba(229,57,53,0.1)':'var(--card2)';bf.style.color=!isText?'var(--red)':'var(--text2)';}
-  var pt=document.getElementById('ttsPanelText'),pf=document.getElementById('ttsPanelFile');
-  if(pt)pt.style.display=isText?'block':'none';
-  if(pf)pf.style.display=!isText?'block':'none';
-}
-
+var _ttsUtt=null;
 function ttsSpeak(){
   if(!window.speechSynthesis){toast(_lang==='ar'?'غير مدعوم في هذا المتصفح':'Not supported in this browser','err');return;}
   var text=document.getElementById('ttsInput')?.value?.trim();
   if(!text){toast(_lang==='ar'?'اكتب نصاً أولاً':'Write text first','err');return;}
   window.speechSynthesis.cancel();
   var utt=new SpeechSynthesisUtterance(text);
+  _ttsUtt=utt; // إبقاء مرجع حي للكائن لتفادي حذفه من الذاكرة (Garbage Collection) قبل انتهاء النطق على متصفحات أندرويد
   var selVoice=document.getElementById('ttsVoice')?.value;
   var voices=window.speechSynthesis.getVoices();
   var voice=voices.find(function(v){return v.name===selVoice;});
   if(voice)utt.voice=voice;
   utt.rate=+(document.getElementById('ttsRate')?.value||1);
   utt.pitch=+(document.getElementById('ttsPitch')?.value||1);
-  window.speechSynthesis.speak(utt);
-  toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');
+  utt.onerror=function(e){toast(_lang==='ar'?'تعذّر تشغيل الصوت — تأكد أن مستوى صوت الجهاز (الوسائط) غير صفر':'Could not play — check device media volume is not muted','err');};
+  utt.onstart=function(){toast(_lang==='ar'?'جاري التشغيل...':'Playing...','ok');};
+  window.speechSynthesis.resume();
+  setTimeout(function(){window.speechSynthesis.speak(utt);},60);
 }
 
 // ══ تحويل صيغة الصوت ══
