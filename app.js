@@ -2380,7 +2380,7 @@ function buildTextEditor(){
       const Font=Quill.import('formats/font');
       Font.whitelist=['arial','times','courier','tahoma'];
       Quill.register(Font,true);
-      const Size=Quill.import('formats/size');
+      const Size=Quill.import('attributors/style/size');
       Size.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
       Quill.register(Size,true);
     }catch(e){}
@@ -2395,8 +2395,10 @@ function buildTextEditor(){
 function teToolbarTooltips(){
   const tb=document.getElementById('teToolbar');if(!tb)return;
   tb.querySelectorAll('select[title]').forEach(sel=>{
-    const picker=sel.nextElementSibling;
-    if(picker&&picker.classList.contains('ql-picker')){
+    const cls=[...sel.classList].find(c=>c.indexOf('ql-')===0);
+    if(!cls)return;
+    const picker=tb.querySelector('.ql-picker.'+cls);
+    if(picker){
       const lbl=picker.querySelector('.ql-picker-label');
       if(lbl)lbl.title=sel.title;
     }
@@ -2414,30 +2416,33 @@ function teToolbarTooltips(){
 window._teState=window._teState||{curImg:null,handles:null,dragInfo:null};
 function teSetupImageControls(){
   const root=window._teQuill.root;
+  const pageEl=document.getElementById('tePage');
   const handles=document.createElement('div');
   handles.id='teImgHandles';
-  handles.style.cssText='display:none;position:absolute;z-index:50;';
+  handles.style.cssText='display:none;position:absolute;z-index:50;pointer-events:none;';
   ['top','bottom','left','right'].forEach(p=>{
-    const d=document.createElement('div');d.className='te-img-handle te-h-'+p;d.dataset.pos=p;
+    const d=document.createElement('div');d.className='te-img-handle te-h-'+p;d.dataset.pos=p;d.style.pointerEvents='auto';
     handles.appendChild(d);
   });
   const del=document.createElement('div');
   del.id='teImgDelBtn';del.className='te-img-del';del.textContent='✕';del.title=_lang==='ar'?'حذف الصورة':'Delete image';
+  del.style.pointerEvents='auto';
   handles.appendChild(del);
-  root.appendChild(handles);
+  pageEl.appendChild(handles);
   window._teState.handles=handles;window._teState.curImg=null;
 
   function position(){
     const img=window._teState.curImg;if(!img)return;
-    handles.style.left=img.offsetLeft+'px';handles.style.top=img.offsetTop+'px';
-    handles.style.width=img.offsetWidth+'px';handles.style.height=img.offsetHeight+'px';
+    const pr=pageEl.getBoundingClientRect(),ir=img.getBoundingClientRect();
+    handles.style.left=(ir.left-pr.left)+'px';handles.style.top=(ir.top-pr.top)+'px';
+    handles.style.width=ir.width+'px';handles.style.height=ir.height+'px';
   }
   window._tePositionHandles=position;
 
   root.addEventListener('click',e=>{
     if(e.target.tagName==='IMG'){
       e.stopPropagation();window._teState.curImg=e.target;handles.style.display='block';position();
-    }else if(!handles.contains(e.target)){
+    }else{
       handles.style.display='none';window._teState.curImg=null;
     }
   });
@@ -2455,6 +2460,15 @@ function teSetupImageControls(){
     h.addEventListener('touchstart',start,{passive:false});
   });
 
+  if(!window._teGlobalClickReady){
+    document.addEventListener('click',e=>{
+      const st=window._teState;if(!st.curImg)return;
+      if(e.target.tagName==='IMG'||(st.handles&&st.handles.contains(e.target)))return;
+      if(st.handles)st.handles.style.display='none';
+      st.curImg=null;
+    });
+    window._teGlobalClickReady=true;
+  }
   if(!window._teGlobalDragReady){
     const move=e=>{
       const st=window._teState;if(!st.dragInfo||!st.curImg)return;
