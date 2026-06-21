@@ -2365,7 +2365,7 @@ function buildTextEditor(){
       </div>
       <div id="tePage"><div id="teEditor"></div></div>
     </div>
-    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة لتكبيرها أو تصغيرها أو حذفها.':'Long-press any button to see what it does. Tap an image to resize or delete it.'}</p>
+    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة، ثم اسحب من أطرافها لتغيير الطول أو العرض، أو اضغط × لحذفها.':'Long-press any button to see what it does. Tap an image, then drag its edges to resize, or tap × to delete it.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
     <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
     <div style="display:flex;gap:8px">
@@ -2411,45 +2411,69 @@ function teToolbarTooltips(){
   tb.addEventListener('touchend',e=>{clearTimeout(timer);if(longPressed){e.preventDefault();e.stopPropagation();}},{passive:false});
   tb.addEventListener('touchmove',()=>clearTimeout(timer),{passive:true});
 }
-function teEnsureImgPopup(){
-  let popup=document.getElementById('teImgPopup');
-  if(popup)return popup;
-  popup=document.createElement('div');
-  popup.id='teImgPopup';
-  popup.style.cssText='display:none;position:fixed;z-index:2000;background:#222;border:1px solid #444;border-radius:10px;padding:6px;gap:6px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.5)';
-  popup.innerHTML=`
-    <button id="teImgSmaller" title="${_lang==='ar'?'تصغير':'Smaller'}" style="width:36px;height:36px;background:#333;border:none;border-radius:8px;color:#fff;font-size:20px;cursor:pointer">−</button>
-    <button id="teImgBigger" title="${_lang==='ar'?'تكبير':'Bigger'}" style="width:36px;height:36px;background:#333;border:none;border-radius:8px;color:#fff;font-size:20px;cursor:pointer">+</button>
-    <button id="teImgDel" title="${_lang==='ar'?'حذف':'Delete'}" style="width:36px;height:36px;background:#e53935;border:none;border-radius:8px;color:#fff;font-size:16px;cursor:pointer">✕</button>`;
-  document.body.appendChild(popup);
-  document.addEventListener('click',e=>{
-    if(e.target.closest('#teImgPopup')||e.target.tagName==='IMG')return;
-    popup.style.display='none';window._teCurImg=null;
-  });
-  document.getElementById('teImgSmaller').onclick=()=>{
-    if(!window._teCurImg)return;const img=window._teCurImg;img.style.width=Math.max(40,img.offsetWidth*0.85)+'px';img.style.height='auto';
-  };
-  document.getElementById('teImgBigger').onclick=()=>{
-    if(!window._teCurImg)return;const img=window._teCurImg;const maxW=(img.closest('.ql-editor')||document.body).offsetWidth-20;img.style.width=Math.min(maxW,img.offsetWidth*1.15)+'px';img.style.height='auto';
-  };
-  document.getElementById('teImgDel').onclick=()=>{
-    if(!window._teCurImg)return;window._teCurImg.remove();popup.style.display='none';window._teCurImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');
-  };
-  return popup;
-}
+window._teState=window._teState||{curImg:null,handles:null,dragInfo:null};
 function teSetupImageControls(){
   const root=window._teQuill.root;
-  const popup=teEnsureImgPopup();
+  const handles=document.createElement('div');
+  handles.id='teImgHandles';
+  handles.style.cssText='display:none;position:absolute;z-index:50;';
+  ['top','bottom','left','right'].forEach(p=>{
+    const d=document.createElement('div');d.className='te-img-handle te-h-'+p;d.dataset.pos=p;
+    handles.appendChild(d);
+  });
+  const del=document.createElement('div');
+  del.id='teImgDelBtn';del.className='te-img-del';del.textContent='✕';del.title=_lang==='ar'?'حذف الصورة':'Delete image';
+  handles.appendChild(del);
+  root.appendChild(handles);
+  window._teState.handles=handles;window._teState.curImg=null;
+
+  function position(){
+    const img=window._teState.curImg;if(!img)return;
+    handles.style.left=img.offsetLeft+'px';handles.style.top=img.offsetTop+'px';
+    handles.style.width=img.offsetWidth+'px';handles.style.height=img.offsetHeight+'px';
+  }
+  window._tePositionHandles=position;
+
   root.addEventListener('click',e=>{
     if(e.target.tagName==='IMG'){
-      e.stopPropagation();
-      window._teCurImg=e.target;
-      const r=e.target.getBoundingClientRect();
-      popup.style.display='flex';
-      popup.style.left=Math.max(8,Math.min(window.innerWidth-150,r.left))+'px';
-      popup.style.top=Math.max(8,r.top-50)+'px';
+      e.stopPropagation();window._teState.curImg=e.target;handles.style.display='block';position();
+    }else if(!handles.contains(e.target)){
+      handles.style.display='none';window._teState.curImg=null;
     }
   });
+  del.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(window._teState.curImg){window._teState.curImg.remove();handles.style.display='none';window._teState.curImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
+  });
+  handles.querySelectorAll('.te-img-handle').forEach(h=>{
+    const start=e=>{
+      if(!window._teState.curImg)return;e.preventDefault();e.stopPropagation();
+      const p=e.touches?e.touches[0]:e;
+      window._teState.dragInfo={pos:h.dataset.pos,startX:p.clientX,startY:p.clientY,startW:window._teState.curImg.offsetWidth,startH:window._teState.curImg.offsetHeight};
+    };
+    h.addEventListener('mousedown',start);
+    h.addEventListener('touchstart',start,{passive:false});
+  });
+
+  if(!window._teGlobalDragReady){
+    const move=e=>{
+      const st=window._teState;if(!st.dragInfo||!st.curImg)return;
+      e.preventDefault();
+      const p=e.touches?e.touches[0]:e;
+      const dx=p.clientX-st.dragInfo.startX,dy=p.clientY-st.dragInfo.startY;
+      if(st.dragInfo.pos==='right')st.curImg.style.width=Math.max(30,st.dragInfo.startW+dx)+'px';
+      else if(st.dragInfo.pos==='left')st.curImg.style.width=Math.max(30,st.dragInfo.startW-dx)+'px';
+      else if(st.dragInfo.pos==='bottom')st.curImg.style.height=Math.max(30,st.dragInfo.startH+dy)+'px';
+      else if(st.dragInfo.pos==='top')st.curImg.style.height=Math.max(30,st.dragInfo.startH-dy)+'px';
+      if(window._tePositionHandles)window._tePositionHandles();
+    };
+    const end=()=>{window._teState.dragInfo=null;};
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',end);
+    document.addEventListener('touchmove',move,{passive:false});
+    document.addEventListener('touchend',end);
+    window._teGlobalDragReady=true;
+  }
 }
 function tePrint(){
   if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
