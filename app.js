@@ -244,7 +244,7 @@ const ALL_TOOLS=[
   {ar:'إضافة نص',en:'Add Text',id:'addtext'},
   {ar:'توقيع رقمي',en:'Signature',id:'signature'},
   {ar:'ملاحظة',en:'Note',id:'note'},
-  {ar:'إنشاء PDF',en:'Create PDF',id:'createpdf'},
+  {ar:'محرر النصوص',en:'Text Editor',id:'texteditor'},
   {ar:'استخراج نص',en:'Extract Text',id:'extract'},
   {ar:'ضغط الملفات',en:'Compress Files',id:'compressFile'},
   {ar:'قفل PDF',en:'Lock PDF',id:'lockPdf'},
@@ -293,7 +293,7 @@ const TOOLS={
   addtext:[{ar:'إضافة نص',en:'Add Text'},buildAddText],
   signature:[{ar:'توقيع رقمي',en:'Signature'},buildSignature],
   note:[{ar:'ملاحظة',en:'Note'},buildNote],
-  createpdf:[{ar:'إنشاء PDF',en:'Create PDF'},buildCreatePDF],
+  texteditor:[{ar:'محرر النصوص',en:'Text Editor'},buildTextEditor],
   folder:[{ar:'إنشاء مجلد',en:'New Folder'},buildFolder],
   barcode:[{ar:'قارئ باركود',en:'Barcode Reader'},buildBarcode],
   stt:[{ar:'صوت إلى نص',en:'Speech to Text'},buildSTT],
@@ -2316,85 +2316,117 @@ function doNote(){
   pdf.save(t+'.pdf');addFile(t+'.pdf','pdf');toast(_lang==='ar'?'تم':'Done','ok');closeSheet();
 }
 
-// إنشاء PDF
-let _cpT=[],_cpI=[],_cpBaseImg=null;
-function buildCreatePDF(){
-  _cpT=[];_cpI=[];
+// محرر النصوص (Text Editor)
+function buildTextEditor(){
   document.getElementById('sheetBody').innerHTML=`
-    ${desc('أنشئ PDF من الصفر: أضف نصوصاً وصوراً واسحبها.','Create PDF from scratch with text and images.')}
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <button style="flex:1;min-width:80px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;cursor:pointer" onclick="cpShowText()">${_lang==='ar'?'+ نص':'+ Text'}</button>
-      <label style="flex:1;min-width:80px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;cursor:pointer;text-align:center">${_lang==='ar'?'+ صورة':'+ Image'}<input type="file" accept="image/*" id="cpImgIn" style="display:none"></label>
-      <button style="flex:1;min-width:80px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text3);font-family:inherit;font-size:13px;cursor:pointer" onclick="_cpT=[];_cpI=[];cpDraw()">${_lang==='ar'?'مسح':'Clear'}</button>
-    </div>
-    <div id="cpTxtRow" style="display:none;margin-bottom:10px;background:var(--card);border-radius:10px;padding:12px">
-      <div class="field"><label>${_lang==='ar'?'النص':'Text'}</label><input type="text" id="cpTxt" placeholder="${_lang==='ar'?'اكتب...':'Type...'}"></div>
-      <div class="fields-row">
-        <div class="field"><label>${_lang==='ar'?'الحجم':'Size'}</label><select id="cpSz"><option value="12">12</option><option value="16">16</option><option value="20" selected>20</option><option value="28">28</option><option value="36">36</option><option value="48">48</option></select></div>
-        <div class="field"><label>${_lang==='ar'?'اللون':'Color'}</label><select id="cpCl"><option value="black">${_lang==='ar'?'أسود':'Black'}</option><option value="#e53935">${_lang==='ar'?'أحمر':'Red'}</option><option value="#1d4ed8">${_lang==='ar'?'أزرق':'Blue'}</option><option value="#15803d">${_lang==='ar'?'أخضر':'Green'}</option></select></div>
+    ${desc('محرر نصوص احترافي. أضف نصاً وصوراً ونسّقها بحرية، ثم اطبع أو احفظ كملف PDF.','A professional text editor. Add and format text and images freely, then print or save as a PDF file.')}
+    <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px">
+      <div id="teToolbar">
+        <span class="ql-formats">
+          <select class="ql-font">
+            <option selected>${_lang==='ar'?'افتراضي':'Default'}</option>
+            <option value="arial">Arial</option>
+            <option value="times">Times New Roman</option>
+            <option value="courier">Courier New</option>
+            <option value="tahoma">Tahoma</option>
+          </select>
+          <select class="ql-size">
+            <option value="12px">12</option>
+            <option value="14px" selected>14</option>
+            <option value="16px">16</option>
+            <option value="18px">18</option>
+            <option value="24px">24</option>
+            <option value="32px">32</option>
+            <option value="48px">48</option>
+          </select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-bold"></button>
+          <button class="ql-italic"></button>
+          <button class="ql-underline"></button>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-color"></select>
+          <select class="ql-background"></select>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-align"></select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-list" value="ordered"></button>
+          <button class="ql-list" value="bullet"></button>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-image"></button>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-clean"></button>
+        </span>
       </div>
-      <div class="fields-row">
-        <div class="field"><label>${_lang==='ar'?'نمط':'Style'}</label><select id="cpSt"><option value="bold">${_lang==='ar'?'عريض':'Bold'}</option><option value="normal">${_lang==='ar'?'عادي':'Normal'}</option></select></div>
-        <div class="field"><label>${_lang==='ar'?'محاذاة':'Align'}</label><select id="cpAl"><option value="right">${_lang==='ar'?'يمين':'Right'}</option><option value="center">${_lang==='ar'?'وسط':'Center'}</option><option value="left">${_lang==='ar'?'يسار':'Left'}</option></select></div>
-      </div>
-      <button style="width:100%;padding:10px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:13px;cursor:pointer" onclick="cpAddText()">${_lang==='ar'?'إضافة':'Add'}</button>
+      <div id="tePage"><div id="teEditor"></div></div>
     </div>
-    <div style="overflow-x:auto;margin-bottom:12px"><canvas id="cpCanvas" style="display:block;border:1px solid var(--border);border-radius:8px;background:white"></canvas></div>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:10px">${_lang==='ar'?'اسحب العناصر لتغيير مكانها':'Drag elements to reposition them'}</p>
-    <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="cpNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
-    <button class="action-btn" onclick="doCPDF()">${icoDl()} ${_lang==='ar'?'تحميل PDF':'Download PDF'}</button>`;
-
-  const W=595,H=842,sc=Math.min(320/W,1);
-  const cv=document.getElementById('cpCanvas');cv.width=W*sc;cv.height=H*sc;
-  window._cpSc=sc;window._cpW=W;window._cpH=H;
-  cpDraw();cpSetupDrag();
-  document.getElementById('cpImgIn').addEventListener('change',e=>{
-    const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);const img=new Image();
-    img.onload=()=>{const sc2=cv.width/W;_cpI.push({img,x:cv.width/2,y:cv.height/3,w:cv.width*.4,h:(cv.width*.4)*(img.naturalHeight/img.naturalWidth)});cpDraw();};
-    img.src=url;e.target.value='';
-  });
-}
-function cpShowText(){document.getElementById('cpTxtRow').style.display='block';}
-function cpAddText(){
-  const txt=document.getElementById('cpTxt').value.trim();if(!txt)return;
-  const cv=document.getElementById('cpCanvas');const sc2=cv.width/window._cpW;
-  _cpT.push({text:txt,x:cv.width/2,y:40*sc2+_cpT.length*30*sc2,sz:+document.getElementById('cpSz').value*sc2,st:document.getElementById('cpSt').value,align:document.getElementById('cpAl').value,color:document.getElementById('cpCl').value});
-  cpDraw();document.getElementById('cpTxt').value='';
-}
-function cpDraw(){
-  const cv=document.getElementById('cpCanvas');if(!cv)return;
-  const ctx=cv.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,cv.width,cv.height);
-  _cpI.forEach(item=>ctx.drawImage(item.img,item.x-item.w/2,item.y-item.h/2,item.w,item.h));
-  _cpT.forEach(t=>{ctx.font=`${t.st} ${t.sz}px IBM Plex Sans Arabic,sans-serif`;ctx.fillStyle=t.color;ctx.textAlign=t.align;const x=t.align==='right'?cv.width-8:t.align==='left'?8:cv.width/2;ctx.fillText(t.text,x,t.y);});
-}
-function cpSetupDrag(){
-  const cv=document.getElementById('cpCanvas');if(!cv)return;
-  if(!window._cpZoomReady&&cv.parentElement){
-    var wrap=cv.parentElement;
-    var inner=document.createElement('div');
-    inner.style.cssText='position:absolute;top:0;left:0;transform-origin:0 0;';
-    wrap.style.position='relative';wrap.style.overflow='hidden';wrap.style.touchAction='none';
-    wrap.insertBefore(inner,cv);inner.appendChild(cv);
-    setupCanvasZoom(wrap,inner,cv,()=>cv.offsetWidth,()=>cv.offsetHeight);
-    window._cpZoomReady=true;
+    <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
+    <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="tePrint()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px;margin-${_lang==='ar'?'left':'right'}:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        ${_lang==='ar'?'طباعة':'Print'}
+      </button>
+      <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ باسم PDF':'Save as PDF'}</button>
+    </div>`;
+  if(!window._teFontReg){
+    try{
+      const Font=Quill.import('formats/font');
+      Font.whitelist=['arial','times','courier','tahoma'];
+      Quill.register(Font,true);
+      const Size=Quill.import('formats/size');
+      Size.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
+      Quill.register(Size,true);
+    }catch(e){}
+    window._teFontReg=true;
   }
-  let drag=null;
-  const gp=e=>{const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(cv.width/r.width),y:(s.clientY-r.top)*(cv.height/r.height)};};
-  const down=e=>{e.preventDefault&&e.preventDefault();const p=gp(e);for(let i=_cpI.length-1;i>=0;i--){const it=_cpI[i];if(Math.abs(p.x-it.x)<it.w/2&&Math.abs(p.y-it.y)<it.h/2){drag={t:'img',i,ox:p.x-it.x,oy:p.y-it.y};return;}}for(let i=_cpT.length-1;i>=0;i--){if(Math.abs(p.y-_cpT[i].y)<20){drag={t:'txt',i,ox:p.x,oy:p.y-_cpT[i].y};return;}}};
-  const move=e=>{if(!drag)return;e.preventDefault&&e.preventDefault();const p=gp(e);if(drag.t==='img'){_cpI[drag.i].x=p.x-drag.ox;_cpI[drag.i].y=p.y-drag.oy;}else{_cpT[drag.i].y=p.y-drag.oy;}cpDraw();};
-  const up=()=>drag=null;
-  cv.addEventListener('mousedown',down);document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
-  cv.addEventListener('touchstart',down,{passive:true});cv.addEventListener('touchmove',e=>{if(drag||dragging)e.preventDefault();move(e);},{passive:false});cv.addEventListener('touchend',up);
+  window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
+  window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
+  window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
 }
-async function doCPDF(){
-  const cv=document.getElementById('cpCanvas');const W=window._cpW,H=window._cpH,sc=cv.width/W;
-  const fc=document.createElement('canvas');fc.width=W;fc.height=H;const ctx=fc.getContext('2d');
-  ctx.fillStyle='white';ctx.fillRect(0,0,W,H);
-  _cpI.forEach(it=>ctx.drawImage(it.img,(it.x-it.w/2)/sc,(it.y-it.h/2)/sc,it.w/sc,it.h/sc));
-  _cpT.forEach(t=>{ctx.font=`${t.st} ${t.sz/sc}px sans-serif`;ctx.fillStyle=t.color;ctx.textAlign=t.align;const x=t.align==='right'?W-8:t.align==='left'?8:W/2;ctx.fillText(t.text,x,t.y/sc);});
-  const data=fc.toDataURL('image/jpeg',.92);const nm=document.getElementById('cpNm').value.trim()||'document';
-  const pdf=new jsPDF({unit:'mm',format:'a4'});pdf.addImage(data,'JPEG',0,0,210,297);
-  pdf.save(nm+'.pdf');addFile(nm+'.pdf','pdf');toast(_lang==='ar'?'تم':'Done','ok');closeSheet();
+function tePrint(){
+  if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
+  const html=window._teQuill.root.innerHTML;
+  const win=window.open('','_blank');
+  if(!win){toast(_lang==='ar'?'فعّل النوافذ المنبثقة للطباعة':'Enable popups to print','err');return;}
+  win.document.write(`<html><head><title>${_lang==='ar'?'طباعة':'Print'}</title><style>body{font-family:Tahoma,Arial,sans-serif;direction:${_lang==='ar'?'rtl':'ltr'};padding:24px;max-width:800px;margin:0 auto}img{max-width:100%}</style></head><body>${html}<script>setTimeout(function(){window.print()},350)<\/script></body></html>`);
+  win.document.close();
+}
+async function teSaveAsPDF(){
+  if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
+  const nm=document.getElementById('teNm').value.trim()||(_lang==='ar'?'مستند':'document');
+  const pb=document.getElementById('tePB'),pl=document.getElementById('tePL'),pf=document.getElementById('tePF');
+  pb.classList.add('show');pl.textContent=_lang==='ar'?'جاري التحضير...':'Preparing...';pf.style.width='15%';
+  try{
+    const pageEl=document.getElementById('tePage');
+    const canvas=await html2canvas(pageEl,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+    pf.style.width='60%';pl.textContent=_lang==='ar'?'جاري إنشاء الصفحات...':'Building pages...';
+    const imgW=210,pageHmm=297;
+    const pxPerMm=canvas.width/imgW;
+    const pageHpx=Math.floor(pageHmm*pxPerMm);
+    const totalPages=Math.max(1,Math.ceil(canvas.height/pageHpx));
+    const pdf=new jsPDF({unit:'mm',format:'a4'});
+    for(let i=0;i<totalPages;i++){
+      const sliceH=Math.min(pageHpx,canvas.height-i*pageHpx);
+      const sc=document.createElement('canvas');sc.width=canvas.width;sc.height=sliceH;
+      const ctx=sc.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,sc.width,sc.height);
+      ctx.drawImage(canvas,0,-i*pageHpx);
+      const data=sc.toDataURL('image/jpeg',.92);
+      if(i>0)pdf.addPage();
+      pdf.addImage(data,'JPEG',0,0,imgW,sliceH/pxPerMm);
+      pf.style.width=(60+((i+1)/totalPages)*35)+'%';
+    }
+    pf.style.width='100%';await delay(200);
+    pdf.save(nm+'.pdf');addFile(nm+'.pdf','pdf');
+    pb.classList.remove('show');
+    toast(_lang==='ar'?'تم الحفظ':'Saved','ok');
+    closeSheet();
+  }catch(e){pb.classList.remove('show');toast('Error: '+e.message,'err');}
 }
 
 // مجلد
