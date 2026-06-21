@@ -2323,14 +2323,14 @@ function buildTextEditor(){
     <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px">
       <div id="teToolbar">
         <span class="ql-formats">
-          <select class="ql-font">
+          <select class="ql-font" title="${_lang==='ar'?'نوع الخط':'Font'}">
             <option selected>${_lang==='ar'?'افتراضي':'Default'}</option>
             <option value="arial">Arial</option>
             <option value="times">Times New Roman</option>
             <option value="courier">Courier New</option>
             <option value="tahoma">Tahoma</option>
           </select>
-          <select class="ql-size">
+          <select class="ql-size" title="${_lang==='ar'?'حجم الخط':'Font Size'}">
             <option value="12px">12</option>
             <option value="14px" selected>14</option>
             <option value="16px">16</option>
@@ -2341,30 +2341,31 @@ function buildTextEditor(){
           </select>
         </span>
         <span class="ql-formats">
-          <button class="ql-bold"></button>
-          <button class="ql-italic"></button>
-          <button class="ql-underline"></button>
+          <button class="ql-bold" title="${_lang==='ar'?'عريض':'Bold'}"></button>
+          <button class="ql-italic" title="${_lang==='ar'?'مائل':'Italic'}"></button>
+          <button class="ql-underline" title="${_lang==='ar'?'تسطير':'Underline'}"></button>
         </span>
         <span class="ql-formats">
-          <select class="ql-color"></select>
-          <select class="ql-background"></select>
+          <select class="ql-color" title="${_lang==='ar'?'لون النص':'Text Color'}"></select>
+          <select class="ql-background" title="${_lang==='ar'?'لون التظليل':'Highlight Color'}"></select>
         </span>
         <span class="ql-formats">
-          <select class="ql-align"></select>
+          <select class="ql-align" title="${_lang==='ar'?'محاذاة':'Align'}"></select>
         </span>
         <span class="ql-formats">
-          <button class="ql-list" value="ordered"></button>
-          <button class="ql-list" value="bullet"></button>
+          <button class="ql-list" value="ordered" title="${_lang==='ar'?'قائمة مرقّمة':'Numbered List'}"></button>
+          <button class="ql-list" value="bullet" title="${_lang==='ar'?'قائمة نقطية':'Bullet List'}"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-image"></button>
+          <button class="ql-image" title="${_lang==='ar'?'إدراج صورة':'Insert Image'}"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-clean"></button>
+          <button class="ql-clean" title="${_lang==='ar'?'إزالة التنسيق':'Clear Formatting'}"></button>
         </span>
       </div>
       <div id="tePage"><div id="teEditor"></div></div>
     </div>
+    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة لتكبيرها أو تصغيرها أو حذفها.':'Long-press any button to see what it does. Tap an image to resize or delete it.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
     <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
     <div style="display:flex;gap:8px">
@@ -2388,6 +2389,67 @@ function buildTextEditor(){
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
+  teToolbarTooltips();
+  teSetupImageControls();
+}
+function teToolbarTooltips(){
+  const tb=document.getElementById('teToolbar');if(!tb)return;
+  tb.querySelectorAll('select[title]').forEach(sel=>{
+    const picker=sel.nextElementSibling;
+    if(picker&&picker.classList.contains('ql-picker')){
+      const lbl=picker.querySelector('.ql-picker-label');
+      if(lbl)lbl.title=sel.title;
+    }
+  });
+  let timer=null,longPressed=false;
+  tb.addEventListener('touchstart',e=>{
+    const t=e.target.closest('[title]');
+    longPressed=false;clearTimeout(timer);
+    if(!t||!t.title)return;
+    timer=setTimeout(()=>{longPressed=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);
+  },{passive:true});
+  tb.addEventListener('touchend',e=>{clearTimeout(timer);if(longPressed){e.preventDefault();e.stopPropagation();}},{passive:false});
+  tb.addEventListener('touchmove',()=>clearTimeout(timer),{passive:true});
+}
+function teEnsureImgPopup(){
+  let popup=document.getElementById('teImgPopup');
+  if(popup)return popup;
+  popup=document.createElement('div');
+  popup.id='teImgPopup';
+  popup.style.cssText='display:none;position:fixed;z-index:2000;background:#222;border:1px solid #444;border-radius:10px;padding:6px;gap:6px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.5)';
+  popup.innerHTML=`
+    <button id="teImgSmaller" title="${_lang==='ar'?'تصغير':'Smaller'}" style="width:36px;height:36px;background:#333;border:none;border-radius:8px;color:#fff;font-size:20px;cursor:pointer">−</button>
+    <button id="teImgBigger" title="${_lang==='ar'?'تكبير':'Bigger'}" style="width:36px;height:36px;background:#333;border:none;border-radius:8px;color:#fff;font-size:20px;cursor:pointer">+</button>
+    <button id="teImgDel" title="${_lang==='ar'?'حذف':'Delete'}" style="width:36px;height:36px;background:#e53935;border:none;border-radius:8px;color:#fff;font-size:16px;cursor:pointer">✕</button>`;
+  document.body.appendChild(popup);
+  document.addEventListener('click',e=>{
+    if(e.target.closest('#teImgPopup')||e.target.tagName==='IMG')return;
+    popup.style.display='none';window._teCurImg=null;
+  });
+  document.getElementById('teImgSmaller').onclick=()=>{
+    if(!window._teCurImg)return;const img=window._teCurImg;img.style.width=Math.max(40,img.offsetWidth*0.85)+'px';img.style.height='auto';
+  };
+  document.getElementById('teImgBigger').onclick=()=>{
+    if(!window._teCurImg)return;const img=window._teCurImg;const maxW=(img.closest('.ql-editor')||document.body).offsetWidth-20;img.style.width=Math.min(maxW,img.offsetWidth*1.15)+'px';img.style.height='auto';
+  };
+  document.getElementById('teImgDel').onclick=()=>{
+    if(!window._teCurImg)return;window._teCurImg.remove();popup.style.display='none';window._teCurImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');
+  };
+  return popup;
+}
+function teSetupImageControls(){
+  const root=window._teQuill.root;
+  const popup=teEnsureImgPopup();
+  root.addEventListener('click',e=>{
+    if(e.target.tagName==='IMG'){
+      e.stopPropagation();
+      window._teCurImg=e.target;
+      const r=e.target.getBoundingClientRect();
+      popup.style.display='flex';
+      popup.style.left=Math.max(8,Math.min(window.innerWidth-150,r.left))+'px';
+      popup.style.top=Math.max(8,r.top-50)+'px';
+    }
+  });
 }
 function tePrint(){
   if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
