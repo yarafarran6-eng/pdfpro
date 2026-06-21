@@ -245,6 +245,10 @@ const ALL_TOOLS=[
   {ar:'توقيع رقمي',en:'Signature',id:'signature'},
   {ar:'ملاحظة',en:'Note',id:'note'},
   {ar:'إنشاء PDF',en:'Create PDF',id:'createpdf'},
+  {ar:'استخراج نص',en:'Extract Text',id:'extract'},
+  {ar:'ضغط الملفات',en:'Compress Files',id:'compressFile'},
+  {ar:'قفل PDF',en:'Lock PDF',id:'lockPdf'},
+  {ar:'طباعة',en:'Print',id:'printTool'},
 ];
 function openSearch(){document.getElementById('searchBar').classList.add('open');document.getElementById('searchInput').focus();}
 function closeSearch(){document.getElementById('searchBar').classList.remove('open');document.getElementById('searchResults').classList.remove('open');document.getElementById('searchInput').value='';}
@@ -294,6 +298,10 @@ const TOOLS={
   barcode:[{ar:'قارئ باركود',en:'Barcode Reader'},buildBarcode],
   stt:[{ar:'صوت إلى نص',en:'Speech to Text'},buildSTT],
   audioconv:[{ar:'تحويل صيغة الصوت',en:'Audio Convert'},buildAudioConv],
+  extract:[{ar:'استخراج نص',en:'Extract Text'},buildExtract],
+  compressFile:[{ar:'ضغط الملفات',en:'Compress Files'},buildCompressFile],
+  lockPdf:[{ar:'قفل PDF',en:'Lock PDF'},buildLockPDF],
+  printTool:[{ar:'طباعة',en:'Print'},buildPrintTool],
 };
 function openTool(id){const t=TOOLS[id];if(!t)return;openSheet(_lang==='ar'?t[0].ar:t[0].en,t[1]);}
 function comingSoon(){toast(_lang==='ar'?'هذه الميزة قادمة قريباً ✨':'Coming soon ✨');}
@@ -2398,4 +2406,243 @@ function buildFolder(){
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
       ${_lang==='ar'?'إنشاء':'Create'}
     </button>`;
+}
+
+// ── طباعة (Print) ──────────────────────────────
+function buildPrintTool(){
+  document.getElementById('sheetBody').innerHTML=`
+    ${desc('اطبع أي ملف PDF أو صورة مباشرة من جهازك.','Print any PDF or image directly from your device.')}
+    <div class="drop-zone"><input type="file" id="prIn" accept=".pdf,application/pdf,image/*">
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+      <div class="dz-t">${_lang==='ar'?'اختر ملف':'Choose File'}</div><div class="dz-s">PDF · ${_lang==='ar'?'صورة':'Image'}</div></div>
+    <div id="prCont" style="display:none">
+      <div class="sel-list" id="prList"></div>
+      <button class="action-btn" onclick="doPrintTool()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        ${_lang==='ar'?'طباعة':'Print'}
+      </button>
+    </div>`;
+  document.getElementById('prIn').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;window._prF=f;
+    const isImg=f.type.startsWith('image');
+    document.getElementById('prList').innerHTML=`<div class="sel-item"><div class="si-icon">${isImg?icoI():icoF()}</div><span class="si-name">${f.name}</span><span class="si-size">${fmtSize(f.size)}</span></div>`;
+    document.getElementById('prCont').style.display='block';
+  });
+}
+function doPrintTool(){
+  const f=window._prF;
+  if(!f){toast(_lang==='ar'?'اختر ملف أولاً':'Choose a file first','err');return;}
+  const url=URL.createObjectURL(f);
+  const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+  if(isPDF){
+    const win=window.open(url,'_blank');
+    if(!win){toast(_lang==='ar'?'فعّل النوافذ المنبثقة للطباعة':'Enable popups to print','err');return;}
+    toast(_lang==='ar'?'افتح قائمة المتصفح واختر طباعة':'Use the browser menu to print','ok');
+  }else{
+    const win=window.open('','_blank');
+    if(!win){toast(_lang==='ar'?'فعّل النوافذ المنبثقة للطباعة':'Enable popups to print','err');return;}
+    win.document.write(`<html><head><title>${f.name}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center}img{max-width:100%}</style></head><body><img src="${url}" onload="setTimeout(function(){window.print()},250)"></body></html>`);
+    win.document.close();
+  }
+}
+
+// ── استخراج نص (Extract Text / OCR) ────────────
+function buildExtract(){
+  document.getElementById('sheetBody').innerHTML=`
+    ${desc('يستخرج النص من ملف PDF أو صورة. للملفات الممسوحة ضوئياً يستخدم تقنية التعرف الضوئي (OCR) — قد تأخذ وقتاً أطول.','Extract text from a PDF or image. Uses OCR for scanned content — may take longer.')}
+    <div class="drop-zone"><input type="file" id="exIn" accept=".pdf,application/pdf,image/*">
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ad9d9" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div>
+      <div class="dz-t">${_lang==='ar'?'اختر ملف':'Choose File'}</div><div class="dz-s">PDF · ${_lang==='ar'?'صورة':'Image'}</div></div>
+    <div id="exCont" style="display:none">
+      <div class="sel-list" id="exList"></div>
+      <div class="field"><label>${_lang==='ar'?'لغة النص (للصور الممسوحة)':'Text language (for scanned content)'}</label>
+        <select id="exLang"><option value="ara">${_lang==='ar'?'عربي':'Arabic'}</option><option value="eng">${_lang==='ar'?'إنجليزي':'English'}</option></select></div>
+      <div class="prog-box" id="exPB"><div class="prog-lbl" id="exPL">...</div><div class="prog-bar"><div class="prog-fill" id="exPF"></div></div></div>
+      <button class="action-btn" onclick="doExtract()">${_lang==='ar'?'استخراج النص':'Extract Text'}</button>
+      <div id="exResultWrap" style="display:none;margin-top:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${_lang==='ar'?'النص المستخرج:':'Extracted text:'}</div>
+        <textarea id="exResult" rows="10" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('exResult').value);toast(_lang==='ar'?'تم النسخ':'Copied','ok')" style="flex:1;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;cursor:pointer">${_lang==='ar'?'نسخ':'Copy'}</button>
+          <button onclick="downloadExtractedText()" style="flex:1;padding:10px;background:var(--red);border:none;border-radius:8px;color:white;font-family:inherit;font-size:12px;cursor:pointer">${_lang==='ar'?'تحميل txt':'Download txt'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('exIn').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;window._exF=f;
+    const isImg=f.type.startsWith('image');
+    document.getElementById('exList').innerHTML=`<div class="sel-item"><div class="si-icon">${isImg?icoI():icoF()}</div><span class="si-name">${f.name}</span><span class="si-size">${fmtSize(f.size)}</span></div>`;
+    document.getElementById('exCont').style.display='block';
+    document.getElementById('exResultWrap').style.display='none';
+  });
+}
+async function doExtract(){
+  const f=window._exF;
+  if(!f){toast(_lang==='ar'?'اختر ملف أولاً':'Choose a file first','err');return;}
+  const pb=document.getElementById('exPB'),pl=document.getElementById('exPL'),pf=document.getElementById('exPF');
+  pb.classList.add('show');pf.style.width='5%';
+  try{
+    let text='';
+    const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+    const lang=document.getElementById('exLang').value;
+    if(isPDF){
+      pl.textContent=_lang==='ar'?'قراءة الملف...':'Reading file...';
+      const ab=await f.arrayBuffer();const pdfDoc=await pdfjsLib.getDocument({data:ab}).promise;
+      let digital='';
+      for(let p=1;p<=pdfDoc.numPages;p++){
+        pl.textContent=`${_lang==='ar'?'صفحة':'Page'} ${p}/${pdfDoc.numPages}`;pf.style.width=(p/pdfDoc.numPages*45)+'%';
+        const page=await pdfDoc.getPage(p);const tc=await page.getTextContent();
+        digital+=tc.items.map(it=>it.str).join(' ')+'\n\n';
+      }
+      if(digital.trim().length>20){
+        text=digital.trim();
+      }else{
+        pl.textContent=_lang==='ar'?'ملف ممسوح ضوئياً، جاري التعرف...':'Scanned file, running OCR...';
+        const worker=await Tesseract.createWorker(lang);
+        let ocrText='';
+        for(let p=1;p<=pdfDoc.numPages;p++){
+          pl.textContent=`OCR ${p}/${pdfDoc.numPages}`;pf.style.width=(45+p/pdfDoc.numPages*50)+'%';
+          const page=await pdfDoc.getPage(p);const vp=page.getViewport({scale:2});
+          const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+          await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+          const {data:{text:pt}}=await worker.recognize(cv);
+          ocrText+=pt+'\n\n';
+        }
+        await worker.terminate();
+        text=ocrText.trim();
+      }
+    }else{
+      pl.textContent=_lang==='ar'?'جاري التعرف الضوئي...':'Running OCR...';pf.style.width='20%';
+      const worker=await Tesseract.createWorker(lang);
+      const url=URL.createObjectURL(f);
+      const {data:{text:it}}=await worker.recognize(url);
+      URL.revokeObjectURL(url);
+      await worker.terminate();
+      text=it.trim();
+    }
+    pf.style.width='100%';
+    document.getElementById('exResult').value=text||(_lang==='ar'?'لم يتم العثور على نص':'No text found');
+    document.getElementById('exResultWrap').style.display='block';
+    pb.classList.remove('show');
+    toast(_lang==='ar'?'تم الاستخراج':'Extracted','ok');
+  }catch(e){pb.classList.remove('show');toast('Error: '+e.message,'err');}
+}
+function downloadExtractedText(){
+  const text=document.getElementById('exResult').value;
+  const blob=new Blob([text],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=(window._exF?window._exF.name.replace(/\.[^.]+$/,''):'extracted')+'.txt';document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ── ضغط الملفات (Compress PDF File) ────────────
+function buildCompressFile(){
+  document.getElementById('sheetBody').innerHTML=`
+    ${desc('يقلل حجم ملف PDF عن طريق ضغط الصور بداخله.','Reduces PDF file size by compressing the images inside it.')}
+    <div class="drop-zone"><input type="file" id="cfIn" accept=".pdf,application/pdf">
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a3e635" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="4 14 10 14 10 20"/></svg></div>
+      <div class="dz-t">${_lang==='ar'?'اختر ملف PDF':'Choose PDF file'}</div></div>
+    <div id="cfCont" style="display:none">
+      <div class="sel-list" id="cfList"></div>
+      <div class="field"><label>${_lang==='ar'?'مستوى الضغط':'Compression Level'}</label>
+        <select id="cfQ">
+          <option value="0.4">${_lang==='ar'?'ضغط عالٍ (حجم أصغر)':'High (smaller size)'}</option>
+          <option value="0.65" selected>${_lang==='ar'?'متوسط':'Medium'}</option>
+          <option value="0.85">${_lang==='ar'?'ضغط خفيف (جودة أعلى)':'Light (higher quality)'}</option>
+        </select></div>
+      <div class="prog-box" id="cfPB"><div class="prog-lbl" id="cfPL">...</div><div class="prog-bar"><div class="prog-fill" id="cfPF"></div></div></div>
+      <button class="action-btn" id="cfBtn" onclick="doCompressFile()">${icoDl()} ${_lang==='ar'?'ضغط وتحميل':'Compress & Download'}</button>
+    </div>`;
+  document.getElementById('cfIn').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;window._cfF=f;
+    document.getElementById('cfList').innerHTML=`<div class="sel-item"><div class="si-icon">${icoF()}</div><span class="si-name">${f.name}</span><span class="si-size">${fmtSize(f.size)}</span></div>`;
+    document.getElementById('cfCont').style.display='block';
+  });
+}
+async function doCompressFile(){
+  const f=window._cfF;
+  if(!f){toast(_lang==='ar'?'اختر ملف أولاً':'Choose a file first','err');return;}
+  const q=parseFloat(document.getElementById('cfQ').value);
+  const btn=document.getElementById('cfBtn'),pb=document.getElementById('cfPB'),pl=document.getElementById('cfPL'),pf=document.getElementById('cfPF');
+  btn.disabled=true;pb.classList.add('show');
+  try{
+    const origSize=f.size;
+    const ab=await f.arrayBuffer();const pdfDoc=await pdfjsLib.getDocument({data:ab}).promise;
+    let pdf=null;
+    for(let p=1;p<=pdfDoc.numPages;p++){
+      pl.textContent=`${p}/${pdfDoc.numPages}...`;pf.style.width=(p/pdfDoc.numPages*90)+'%';
+      const page=await pdfDoc.getPage(p);const vp=page.getViewport({scale:1.5});
+      const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      const data=cv.toDataURL('image/jpeg',q);
+      const pw=vp.width*.264583/1.5,ph=vp.height*.264583/1.5;
+      if(!pdf)pdf=new jsPDF({unit:'mm',format:[pw,ph]});else pdf.addPage([pw,ph]);
+      pdf.addImage(data,'JPEG',0,0,pw,ph);
+    }
+    pf.style.width='100%';await delay(300);
+    const blob=pdf.output('blob');
+    const newSize=blob.size;
+    const nm=f.name.replace(/\.pdf$/i,'')+'-compressed.pdf';
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nm;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    addFile(nm,'pdf');
+    pb.classList.remove('show');btn.disabled=false;
+    const pct=Math.max(0,Math.round((1-newSize/origSize)*100));
+    toast((_lang==='ar'?`تم الضغط، توفير ${pct}%`:`Compressed, saved ${pct}%`),'ok');
+    closeSheet();
+  }catch(e){pb.classList.remove('show');btn.disabled=false;toast('Error: '+e.message,'err');}
+}
+
+// ── قفل PDF (Lock / Password Protect) ──────────
+function buildLockPDF(){
+  document.getElementById('sheetBody').innerHTML=`
+    ${desc('يحمي ملف PDF بكلمة مرور لفتحه. احتفظ بكلمة المرور جيداً، لا يمكن استرجاعها.','Protects a PDF with a password to open it. Keep your password safe — it cannot be recovered.')}
+    <div class="drop-zone"><input type="file" id="lkIn" accept=".pdf,application/pdf">
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="dz-t">${_lang==='ar'?'اختر ملف PDF':'Choose PDF file'}</div></div>
+    <div id="lkCont" style="display:none">
+      <div class="sel-list" id="lkList"></div>
+      <div class="field"><label>${_lang==='ar'?'كلمة المرور (٤ أحرف على الأقل)':'Password (min 4 characters)'}</label><input type="text" id="lkPass" placeholder="${_lang==='ar'?'أدخل كلمة مرور':'Enter password'}"></div>
+      <div class="prog-box" id="lkPB"><div class="prog-lbl" id="lkPL">...</div><div class="prog-bar"><div class="prog-fill" id="lkPF"></div></div></div>
+      <button class="action-btn" id="lkBtn" onclick="doLockPDF()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ${_lang==='ar'?'قفل وتحميل':'Lock & Download'}
+      </button>
+    </div>`;
+  document.getElementById('lkIn').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;window._lkF=f;
+    document.getElementById('lkList').innerHTML=`<div class="sel-item"><div class="si-icon">${icoF()}</div><span class="si-name">${f.name}</span><span class="si-size">${fmtSize(f.size)}</span></div>`;
+    document.getElementById('lkCont').style.display='block';
+  });
+}
+async function doLockPDF(){
+  const f=window._lkF;
+  if(!f){toast(_lang==='ar'?'اختر ملف أولاً':'Choose a file first','err');return;}
+  const pass=document.getElementById('lkPass').value.trim();
+  if(!pass||pass.length<4){toast(_lang==='ar'?'أدخل كلمة مرور 4 أحرف على الأقل':'Enter a password (min 4 chars)','err');return;}
+  const btn=document.getElementById('lkBtn'),pb=document.getElementById('lkPB'),pl=document.getElementById('lkPL'),pf=document.getElementById('lkPF');
+  btn.disabled=true;pb.classList.add('show');
+  try{
+    const ab=await f.arrayBuffer();const pdfDoc=await pdfjsLib.getDocument({data:ab}).promise;
+    let pdf=null;
+    for(let p=1;p<=pdfDoc.numPages;p++){
+      pl.textContent=`${p}/${pdfDoc.numPages}...`;pf.style.width=(p/pdfDoc.numPages*90)+'%';
+      const page=await pdfDoc.getPage(p);const vp=page.getViewport({scale:2});
+      const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      const data=cv.toDataURL('image/jpeg',.88);
+      const pw=vp.width*.264583/2,ph=vp.height*.264583/2;
+      if(!pdf){
+        pdf=new jsPDF({unit:'mm',format:[pw,ph],encryption:{userPassword:pass,ownerPassword:pass,userPermissions:['print','copy']}});
+      }else{
+        pdf.addPage([pw,ph]);
+      }
+      pdf.addImage(data,'JPEG',0,0,pw,ph);
+    }
+    pf.style.width='100%';await delay(300);
+    const nm=f.name.replace(/\.pdf$/i,'')+'-locked.pdf';
+    pdf.save(nm);addFile(nm,'pdf');
+    pb.classList.remove('show');btn.disabled=false;
+    toast(_lang==='ar'?'تم قفل الملف بكلمة المرور':'File locked with password','ok');
+    closeSheet();
+  }catch(e){pb.classList.remove('show');btn.disabled=false;toast('Error: '+e.message,'err');}
 }
