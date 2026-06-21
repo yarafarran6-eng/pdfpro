@@ -2413,7 +2413,7 @@ function buildPrintTool(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('اطبع أي ملف PDF أو صورة مباشرة من جهازك.','Print any PDF or image directly from your device.')}
     <div class="drop-zone"><input type="file" id="prIn" accept=".pdf,application/pdf,image/*">
-      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
       <div class="dz-t">${_lang==='ar'?'اختر ملف':'Choose File'}</div><div class="dz-s">PDF · ${_lang==='ar'?'صورة':'Image'}</div></div>
     <div id="prCont" style="display:none">
       <div class="sel-list" id="prList"></div>
@@ -2597,7 +2597,7 @@ function buildLockPDF(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('يحمي ملف PDF بكلمة مرور لفتحه. احتفظ بكلمة المرور جيداً، لا يمكن استرجاعها.','Protects a PDF with a password to open it. Keep your password safe — it cannot be recovered.')}
     <div class="drop-zone"><input type="file" id="lkIn" accept=".pdf,application/pdf">
-      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="dz-icwrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
       <div class="dz-t">${_lang==='ar'?'اختر ملف PDF':'Choose PDF file'}</div></div>
     <div id="lkCont" style="display:none">
       <div class="sel-list" id="lkList"></div>
