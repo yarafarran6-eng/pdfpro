@@ -2320,50 +2320,8 @@ function doNote(){
 function buildTextEditor(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('محرر نصوص احترافي. أضف نصاً وصوراً ونسّقها بحرية، ثم اطبع أو احفظ كملف PDF.','A professional text editor. Add and format text and images freely, then print or save as a PDF file.')}
-    <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px">
-      <div id="teToolbar">
-        <span class="ql-formats">
-          <select class="ql-font" title="${_lang==='ar'?'نوع الخط':'Font'}">
-            <option selected>${_lang==='ar'?'افتراضي':'Default'}</option>
-            <option value="arial">Arial</option>
-            <option value="times">Times New Roman</option>
-            <option value="courier">Courier New</option>
-            <option value="tahoma">Tahoma</option>
-          </select>
-          <select class="ql-size" title="${_lang==='ar'?'حجم الخط':'Font Size'}">
-            <option value="12px">12</option>
-            <option value="14px" selected>14</option>
-            <option value="16px">16</option>
-            <option value="18px">18</option>
-            <option value="24px">24</option>
-            <option value="32px">32</option>
-            <option value="48px">48</option>
-          </select>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-bold" title="${_lang==='ar'?'عريض':'Bold'}"></button>
-          <button class="ql-italic" title="${_lang==='ar'?'مائل':'Italic'}"></button>
-          <button class="ql-underline" title="${_lang==='ar'?'تسطير':'Underline'}"></button>
-        </span>
-        <span class="ql-formats">
-          <select class="ql-color" title="${_lang==='ar'?'لون النص':'Text Color'}"></select>
-          <select class="ql-background" title="${_lang==='ar'?'لون التظليل':'Highlight Color'}"></select>
-        </span>
-        <span class="ql-formats">
-          <select class="ql-align" title="${_lang==='ar'?'محاذاة':'Align'}"></select>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-list" value="ordered" title="${_lang==='ar'?'قائمة مرقّمة':'Numbered List'}"></button>
-          <button class="ql-list" value="bullet" title="${_lang==='ar'?'قائمة نقطية':'Bullet List'}"></button>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-image" title="${_lang==='ar'?'إدراج صورة':'Insert Image'}"></button>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-clean" title="${_lang==='ar'?'إزالة التنسيق':'Clear Formatting'}"></button>
-        </span>
-      </div>
-      <div id="tePage"><div id="teEditor"></div></div>
+    <div id="teCard" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px;position:relative">
+      <div id="teEditor"></div>
     </div>
     <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة، ثم اسحب من أطرافها لتغيير الطول أو العرض، أو اضغط × لحذفها.':'Long-press any button to see what it does. Tap an image, then drag its edges to resize, or tap × to delete it.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
@@ -2377,31 +2335,65 @@ function buildTextEditor(){
     </div>`;
   if(!window._teFontReg){
     try{
-      const Font=Quill.import('formats/font');
+      const Font=Quill.import('attributors/class/font');
       Font.whitelist=['arial','times','courier','tahoma'];
       Quill.register(Font,true);
       const Size=Quill.import('attributors/style/size');
       Size.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
       Quill.register(Size,true);
-    }catch(e){}
-    window._teFontReg=true;
+      window._teFontReg=true;
+    }catch(e){toast('Font setup error: '+e.message,'err');}
   }
-  window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
+  try{
+    window._teQuill=new Quill('#teEditor',{
+      theme:'snow',
+      modules:{
+        toolbar:[
+          [{font:['arial','times','courier','tahoma',false]},{size:['12px','14px','16px','18px','24px','32px','48px',false]}],
+          ['bold','italic','underline'],
+          [{color:[]},{background:[]}],
+          [{align:[]}],
+          [{list:'ordered'},{list:'bullet'}],
+          ['image'],
+          ['clean']
+        ]
+      }
+    });
+  }catch(e){toast('Editor init error: '+e.message,'err');return;}
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
   teToolbarTooltips();
   teSetupImageControls();
 }
 function teToolbarTooltips(){
-  const tb=document.getElementById('teToolbar');if(!tb)return;
-  tb.querySelectorAll('select[title]').forEach(sel=>{
-    const cls=[...sel.classList].find(c=>c.indexOf('ql-')===0);
-    if(!cls)return;
-    const picker=tb.querySelector('.ql-picker.'+cls);
-    if(picker){
-      const lbl=picker.querySelector('.ql-picker-label');
-      if(lbl)lbl.title=sel.title;
+  const tb=document.querySelector('#teCard .ql-toolbar');if(!tb)return;
+  const tipMap={
+    'ql-font':_lang==='ar'?'نوع الخط':'Font',
+    'ql-size':_lang==='ar'?'حجم الخط':'Font Size',
+    'ql-bold':_lang==='ar'?'عريض':'Bold',
+    'ql-italic':_lang==='ar'?'مائل':'Italic',
+    'ql-underline':_lang==='ar'?'تسطير':'Underline',
+    'ql-color':_lang==='ar'?'لون النص':'Text Color',
+    'ql-background':_lang==='ar'?'لون التظليل':'Highlight Color',
+    'ql-align':_lang==='ar'?'محاذاة':'Align',
+    'ql-image':_lang==='ar'?'إدراج صورة':'Insert Image',
+    'ql-clean':_lang==='ar'?'إزالة التنسيق':'Clear Formatting',
+  };
+  tb.querySelectorAll('.ql-picker, button').forEach(el=>{
+    for(const cls in tipMap){
+      if(el.classList.contains(cls)){
+        if(el.classList.contains('ql-picker')){
+          const lbl=el.querySelector('.ql-picker-label');
+          if(lbl)lbl.title=tipMap[cls];
+        }else{
+          el.title=tipMap[cls];
+        }
+        break;
+      }
     }
+  });
+  tb.querySelectorAll('button.ql-list').forEach(btn=>{
+    btn.title=btn.getAttribute('value')==='ordered'?(_lang==='ar'?'قائمة مرقّمة':'Numbered List'):(_lang==='ar'?'قائمة نقطية':'Bullet List');
   });
   let timer=null,longPressed=false;
   tb.addEventListener('touchstart',e=>{
@@ -2416,7 +2408,7 @@ function teToolbarTooltips(){
 window._teState=window._teState||{curImg:null,handles:null,dragInfo:null};
 function teSetupImageControls(){
   const root=window._teQuill.root;
-  const pageEl=document.getElementById('tePage');
+  const pageEl=document.getElementById('teCard');
   const handles=document.createElement('div');
   handles.id='teImgHandles';
   handles.style.cssText='display:none;position:absolute;z-index:50;pointer-events:none;';
@@ -2503,7 +2495,7 @@ async function teSaveAsPDF(){
   const pb=document.getElementById('tePB'),pl=document.getElementById('tePL'),pf=document.getElementById('tePF');
   pb.classList.add('show');pl.textContent=_lang==='ar'?'جاري التحضير...':'Preparing...';pf.style.width='15%';
   try{
-    const pageEl=document.getElementById('tePage');
+    const pageEl=document.querySelector('#teCard .ql-editor');
     const canvas=await html2canvas(pageEl,{scale:2,backgroundColor:'#ffffff',useCORS:true});
     pf.style.width='60%';pl.textContent=_lang==='ar'?'جاري إنشاء الصفحات...':'Building pages...';
     const imgW=210,pageHmm=297;
