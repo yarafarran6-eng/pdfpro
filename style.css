@@ -194,11 +194,11 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .toast.ok{border-color:#1a4d1a;}.toast.err{border-color:var(--red);}
 
 /* ── محرر النصوص (Text Editor) ───────────────── */
-#teToolbar.ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
-#tePage{background:#fff;min-height:420px;position:relative;}
-#tePage .ql-container.ql-snow{border:none;}
-#tePage .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
-#tePage .ql-editor img{max-width:100%;}
+#teCard .ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
+#teCard{background:#fff;min-height:420px;position:relative;}
+#teCard .ql-container.ql-snow{border:none;}
+#teCard .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
+#teCard .ql-editor img{max-width:100%;}
 .te-img-handle{position:absolute;width:16px;height:16px;background:var(--red);border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4);touch-action:none;z-index:50;}
 .te-h-top{top:-8px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
 .te-h-bottom{bottom:-8px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
@@ -206,15 +206,17 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .te-h-right{right:-8px;top:50%;transform:translateY(-50%);cursor:ew-resize;}
 .te-img-del{position:absolute;top:-14px;right:-14px;width:24px;height:24px;background:var(--red);border:2px solid #fff;border-radius:50%;color:#fff;font-size:12px;line-height:20px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);z-index:51;}
 [dir="rtl"] .te-img-del{right:auto;left:-14px;}
-#tePage .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
+#teCard .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
 .ql-font-arial{font-family:Arial,sans-serif;}
 .ql-font-times{font-family:'Times New Roman',serif;}
 .ql-font-courier{font-family:'Courier New',monospace;}
 .ql-font-tahoma{font-family:Tahoma,sans-serif;}
+.ql-picker.ql-font .ql-picker-label::before,.ql-picker.ql-font .ql-picker-item[data-value=""]::before{content:'افتراضي';}
 .ql-picker.ql-font .ql-picker-label[data-value=arial]::before,.ql-picker.ql-font .ql-picker-item[data-value=arial]::before{content:'Arial';font-family:Arial,sans-serif;}
 .ql-picker.ql-font .ql-picker-label[data-value=times]::before,.ql-picker.ql-font .ql-picker-item[data-value=times]::before{content:'Times New Roman';font-family:'Times New Roman',serif;}
 .ql-picker.ql-font .ql-picker-label[data-value=courier]::before,.ql-picker.ql-font .ql-picker-item[data-value=courier]::before{content:'Courier New';font-family:'Courier New',monospace;}
 .ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before{content:'Tahoma';font-family:Tahoma,sans-serif;}
+.ql-picker.ql-size .ql-picker-label::before,.ql-picker.ql-size .ql-picker-item[data-value=""]::before{content:'14';}
 .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="12px"]::before{content:'12';}
 .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="14px"]::before{content:'14';}
 .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="16px"]::before{content:'16';}
