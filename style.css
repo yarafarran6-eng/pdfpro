@@ -192,3 +192,25 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .toast{position:fixed;bottom:calc(var(--nav-h)+14px);left:50%;transform:translateX(-50%) translateY(100px);background:var(--card2);color:var(--text);border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:999;white-space:normal;max-width:88vw;width:max-content;text-align:center;border:1px solid var(--border);transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.ok{border-color:#1a4d1a;}.toast.err{border-color:var(--red);}
+
+/* ── محرر النصوص (Text Editor) ───────────────── */
+#teToolbar.ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
+#tePage{background:#fff;min-height:420px;}
+#tePage .ql-container.ql-snow{border:none;}
+#tePage .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
+#tePage .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
+.ql-font-arial{font-family:Arial,sans-serif;}
+.ql-font-times{font-family:'Times New Roman',serif;}
+.ql-font-courier{font-family:'Courier New',monospace;}
+.ql-font-tahoma{font-family:Tahoma,sans-serif;}
+.ql-picker.ql-font .ql-picker-label[data-value=arial]::before,.ql-picker.ql-font .ql-picker-item[data-value=arial]::before{content:'Arial';font-family:Arial,sans-serif;}
+.ql-picker.ql-font .ql-picker-label[data-value=times]::before,.ql-picker.ql-font .ql-picker-item[data-value=times]::before{content:'Times New Roman';font-family:'Times New Roman',serif;}
+.ql-picker.ql-font .ql-picker-label[data-value=courier]::before,.ql-picker.ql-font .ql-picker-item[data-value=courier]::before{content:'Courier New';font-family:'Courier New',monospace;}
+.ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before{content:'Tahoma';font-family:Tahoma,sans-serif;}
+.ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="12px"]::before{content:'12';}
+.ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="14px"]::before{content:'14';}
+.ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="16px"]::before{content:'16';}
+.ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="18px"]::before{content:'18';}
+.ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="24px"]::before{content:'24';}
+.ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="32px"]::before{content:'32';}
+.ql-picker.ql-size .ql-picker-label[data-value="48px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="48px"]::before{content:'48';}
