@@ -2322,13 +2322,19 @@ function buildTextEditor(){
   const fs=document.getElementById('teFullscreen');
   const fb=document.getElementById('teFullBody');
   if(!fs||!fb)return;
+  const titleEl=document.getElementById('teFullTitle');
+  if(titleEl)titleEl.textContent=ar?'محرر النصوص':'Text Editor';
   fs.style.display='flex';
 
-  // تعديل عنوان الشاشة الكاملة
-  const titleEl=fs.querySelector('span');
-  if(titleEl)titleEl.textContent=ar?'محرر النصوص':'Text Editor';
-
-  fb.innerHTML=`
+  // تسجيل الخطوط في كل مرة (بدون flag) لضمان التطبيق
+  try{
+    const Font=Quill.import('formats/font');
+    Font.whitelist=['arial','times','courier','tahoma'];
+    Quill.register(Font,true);
+    const SizeStyle=Quill.import('attributors/style/size');
+    SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
+    Quill.register(SizeStyle,true);
+  }catch(e){console.warn(e);}
     <div style="background:#fff;flex:1;display:flex;flex-direction:column;">
       <div id="teToolbar" style="position:sticky;top:0;z-index:10;">
         <span class="ql-formats">
@@ -2440,17 +2446,19 @@ function buildTextEditor(){
     d.addEventListener('pointerdown',e=>{
       const img=window._teCurImg;if(!img)return;e.preventDefault();e.stopPropagation();
       img.style.position='relative';
+      // اجعل height:auto عند بداية السحب لمنع التمط
+      if(!img.dataset.resizing){img.style.height='auto';img.dataset.resizing='1';}
       const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
       const sl=parseInt(img.style.left)||0,st=parseInt(img.style.top)||0;
       function mv(ev){
         ev.preventDefault();
         const dx=ev.clientX-sx,dy=ev.clientY-sy;
-        // العرض
-        if(id==='nw'||id==='sw'||id==='w'){const nw=Math.max(30,sw-dx);img.style.width=nw+'px';img.style.left=(sl+(sw-nw))+'px';}
-        else if(id==='ne'||id==='se'||id==='e'){img.style.width=Math.max(30,sw+dx)+'px';}
-        // الارتفاع — فقط للأضلاع العلوية والسفلية والأركان (بدون تشويه: نغير الحجم بدون تغيير height مع width معاً)
-        if(id==='nw'||id==='ne'||id==='n'){const nh=Math.max(30,sh-dy);img.style.height=nh+'px';img.style.top=(st+(sh-nh))+'px';}
-        else if(id==='sw'||id==='se'||id==='s'){img.style.height=Math.max(30,sh+dy)+'px';}
+        // الأركان والأضلاع اليمين/اليسار: غيّر العرض فقط
+        if(id==='e'||id==='se'||id==='ne'){img.style.width=Math.max(30,sw+dx)+'px';}
+        else if(id==='w'||id==='sw'||id==='nw'){const nw=Math.max(30,sw-dx);img.style.width=nw+'px';img.style.left=(sl+(sw-nw))+'px';}
+        // الأضلاع العلوية والسفلية فقط: غيّر الارتفاع مع object-fit
+        if(id==='s'){img.style.height=Math.max(30,sh+dy)+'px';}
+        else if(id==='n'){const nh=Math.max(30,sh-dy);img.style.height=nh+'px';img.style.top=(st+(sh-nh))+'px';}
         tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
