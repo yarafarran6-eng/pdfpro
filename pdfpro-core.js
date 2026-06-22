@@ -2442,21 +2442,24 @@ function buildTextEditor(){
     _h.style.display='none';window._teCurImg=null;
   });
 
-  // اكتشاف لمس الصورة — نمنع Quill من معالجة اللمس عشان ما يفتح الكيبورد
-  window._teQuill.root.addEventListener('touchstart',function(e){
-    if(e.target.tagName==='IMG'){
-      e.preventDefault();
-      e.stopPropagation();
-      window._teCurImg=e.target;
-      tePositionImgH(e.target);
-      _h.style.display='block';
-    }else if(!_h.contains(e.target)){
-      _h.style.display='none';
-      window._teCurImg=null;
-    }
-  },{passive:false,capture:true});
+  // منع كل أحداث الصورة من الوصول لـ Quill (يمنع فتح الكيبورد)
+  ['touchstart','touchend','touchmove','mousedown','click'].forEach(ev=>{
+    window._teQuill.root.addEventListener(ev,function(e){
+      if(e.target.tagName==='IMG'){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if(ev==='touchstart'){
+          window._teCurImg=e.target;
+          tePositionImgH(e.target);
+          _h.style.display='block';
+        }
+      }else if(ev==='touchstart'&&!_h.contains(e.target)){
+        _h.style.display='none';window._teCurImg=null;
+      }
+    },{passive:false,capture:true});
+  });
 
-  // إعادة تموضع المقابض عند تغيّر حجم الشاشة (فتح/إغلاق الكيبورد)
+  // إعادة تموضع المقابض عند تغيّر حجم الشاشة
   window.addEventListener('resize',function(){
     if(window._teCurImg&&_h.style.display==='block'){
       setTimeout(()=>tePositionImgH(window._teCurImg),100);
