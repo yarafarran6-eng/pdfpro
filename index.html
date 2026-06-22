@@ -173,6 +173,14 @@
 <!-- TOOL SHEET -->
 <div class="overlay" id="overlay" onclick="overlayBg(event)">
   <div class="sheet" id="sheet">
+<!-- حاوية المحرر الكاملة -->
+<div id="teFullscreen" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <span style="font-weight:700;font-size:16px">${_lang==='ar'?'محرر النصوص':'Text Editor'}</span>
+    <button onclick="teCloseFullscreen()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px">&#x2715;</button>
+  </div>
+  <div id="teFullBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+</div>
     <div class="sheet-handle"></div>
     <div class="sheet-hd">
       <button class="sheet-close" onclick="closeSheet()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
