@@ -199,28 +199,23 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 #teCard .ql-container.ql-snow{border:none;}
 #teCard .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
 #teCard .ql-editor img{max-width:100%;}
-.te-img-handle{position:absolute;width:16px;height:16px;background:var(--red);border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4);touch-action:none;z-index:50;}
-.te-h-top{top:-8px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
-.te-h-bottom{bottom:-8px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
-.te-h-left{left:-8px;top:50%;transform:translateY(-50%);cursor:ew-resize;}
-.te-h-right{right:-8px;top:50%;transform:translateY(-50%);cursor:ew-resize;}
-.te-img-del{position:absolute;top:-14px;right:-14px;width:24px;height:24px;background:var(--red);border:2px solid #fff;border-radius:50%;color:#fff;font-size:12px;line-height:20px;text-align:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);z-index:51;}
-[dir="rtl"] .te-img-del{right:auto;left:-14px;}
+.te-corner{position:absolute;width:18px;height:18px;background:#e53935;border:2px solid #fff;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.5);touch-action:none;z-index:2;cursor:nwse-resize;}
+.te-c-nw{top:-9px;left:-9px;cursor:nwse-resize;}
+.te-c-ne{top:-9px;right:-9px;cursor:nesw-resize;}
+.te-c-sw{bottom:-9px;left:-9px;cursor:nesw-resize;}
+.te-c-se{bottom:-9px;right:-9px;cursor:nwse-resize;}
 #teCard .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
-.ql-font-arial{font-family:Arial,sans-serif;}
-.ql-font-times{font-family:'Times New Roman',serif;}
-.ql-font-courier{font-family:'Courier New',monospace;}
-.ql-font-tahoma{font-family:Tahoma,sans-serif;}
-.ql-picker.ql-font .ql-picker-label::before,.ql-picker.ql-font .ql-picker-item[data-value=""]::before{content:'افتراضي';}
-.ql-picker.ql-font .ql-picker-label[data-value=arial]::before,.ql-picker.ql-font .ql-picker-item[data-value=arial]::before{content:'Arial';font-family:Arial,sans-serif;}
-.ql-picker.ql-font .ql-picker-label[data-value=times]::before,.ql-picker.ql-font .ql-picker-item[data-value=times]::before{content:'Times New Roman';font-family:'Times New Roman',serif;}
-.ql-picker.ql-font .ql-picker-label[data-value=courier]::before,.ql-picker.ql-font .ql-picker-item[data-value=courier]::before{content:'Courier New';font-family:'Courier New',monospace;}
-.ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before{content:'Tahoma';font-family:Tahoma,sans-serif;}
-.ql-picker.ql-size .ql-picker-label::before,.ql-picker.ql-size .ql-picker-item[data-value=""]::before{content:'14';}
-.ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="12px"]::before{content:'12';}
-.ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="14px"]::before{content:'14';}
-.ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="16px"]::before{content:'16';}
-.ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="18px"]::before{content:'18';}
-.ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="24px"]::before{content:'24';}
-.ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="32px"]::before{content:'32';}
-.ql-picker.ql-size .ql-picker-label[data-value="48px"]::before,.ql-picker.ql-size .ql-picker-item[data-value="48px"]::before{content:'48';}
+.ql-font-Arial,.ql-picker.ql-font .ql-picker-item[data-value="Arial"]{font-family:Arial,sans-serif;}
+.ql-font-Tahoma,.ql-picker.ql-font .ql-picker-item[data-value="Tahoma"]{font-family:Tahoma,sans-serif;}
+.ql-font-Courier-New,.ql-picker.ql-font .ql-picker-item[data-value="Courier New"]{font-family:'Courier New',monospace;}
+.ql-font-Times-New-Roman,.ql-picker.ql-font .ql-picker-item[data-value="Times New Roman"]{font-family:'Times New Roman',serif;}
+.ql-font-Georgia,.ql-picker.ql-font .ql-picker-item[data-value="Georgia"]{font-family:Georgia,serif;}
+.ql-picker.ql-font .ql-picker-label::before{content:'نوع الخط';}
+.ql-picker.ql-font .ql-picker-label[data-value="Arial"]::before{content:'Arial';font-family:Arial,sans-serif;}
+.ql-picker.ql-font .ql-picker-label[data-value="Tahoma"]::before{content:'Tahoma';font-family:Tahoma,sans-serif;}
+.ql-picker.ql-font .ql-picker-label[data-value="Courier New"]::before{content:'Courier New';font-family:'Courier New',monospace;}
+.ql-picker.ql-font .ql-picker-label[data-value="Times New Roman"]::before{content:'Times NR';font-family:'Times New Roman',serif;}
+.ql-picker.ql-font .ql-picker-label[data-value="Georgia"]::before{content:'Georgia';font-family:Georgia,serif;}
+.ql-picker.ql-size .ql-picker-label::before{content:'حجم';}
+.ql-picker.ql-size .ql-picker-label[data-value]::before{content:attr(data-value);}
+.ql-picker.ql-size .ql-picker-item[data-value]::before{content:attr(data-value);}
