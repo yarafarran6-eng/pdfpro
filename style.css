@@ -226,5 +226,5 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 #tePage{background:#fff;min-height:400px;position:relative;}
 #tePage .ql-container.ql-snow{border:none;}
 #tePage .ql-editor,#teEditor .ql-editor{min-height:400px;padding:20px 24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
-#teEditor img,.ql-editor img{touch-action:none;display:block;max-width:100%;}
+#teEditor img,.ql-editor img{touch-action:none;display:block;max-width:100%;object-fit:contain;}
 #teToolbar.ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
