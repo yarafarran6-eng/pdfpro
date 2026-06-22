@@ -2335,6 +2335,8 @@ function buildTextEditor(){
     SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
     Quill.register(SizeStyle,true);
   }catch(e){console.warn(e);}
+
+  fb.innerHTML=`
     <div style="background:#fff;flex:1;display:flex;flex-direction:column;">
       <div id="teToolbar" style="position:sticky;top:0;z-index:10;">
         <span class="ql-formats">
