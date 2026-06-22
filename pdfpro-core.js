@@ -2372,14 +2372,18 @@ function buildTextEditor(){
       <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ PDF':'Save PDF'}</button>
     </div>`;
 
-  try{
-    const Font=Quill.import('formats/font');
-    Font.whitelist=['arial','times','courier','tahoma'];
-    Quill.register(Font,true);
-    const SizeStyle=Quill.import('attributors/style/size');
-    SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
-    Quill.register(SizeStyle,true);
-  }catch(e){console.warn(e);}
+  // تسجيل مرة واحدة فقط طوال عمر الصفحة
+  if(!window._teFontReg){
+    try{
+      const Font=Quill.import('formats/font');
+      Font.whitelist=['arial','times','courier','tahoma'];
+      Quill.register(Font,true);
+      const SizeStyle=Quill.import('attributors/style/size');
+      SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
+      Quill.register(SizeStyle,true);
+      window._teFontReg=true;
+    }catch(e){console.warn(e);}
+  }
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
@@ -2390,7 +2394,7 @@ function buildTextEditor(){
     if(range)window._teLastRange=range;
   });
 
-  // أضف handler مخصص للخط يستخدم آخر تحديد محفوظ
+  // handler مخصص للخط يستخدم آخر تحديد محفوظ
   window._teQuill.getModule('toolbar').addHandler('font',function(val){
     const range=window._teQuill.getSelection()||window._teLastRange;
     if(!range)return;
@@ -2402,17 +2406,42 @@ function buildTextEditor(){
     }
   });
 
-  // مقابض تغيير حجم الصورة
+  // مقابض الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
-  ['nw','ne','sw','se'].forEach(c=>{
+
+  // زر سحب لتحريك الصورة (المنتصف)
+  const _mv=document.createElement('div');
+  _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:rgba(229,57,53,0.85);border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;display:flex;align-items:center;justify-content:center;';
+  _mv.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
+  _mv.addEventListener('pointerdown',e=>{
+    const img=window._teCurImg;if(!img)return;
+    e.preventDefault();e.stopPropagation();
+    const sx=e.clientX,sy=e.clientY;
+    const origX=img.offsetLeft,origY=img.offsetTop;
+    img.style.position='relative';
+    img.style.left=(img.style.left?parseInt(img.style.left):0)+'px';
+    img.style.top=(img.style.top?parseInt(img.style.top):0)+'px';
+    const startL=parseInt(img.style.left)||0;
+    const startT=parseInt(img.style.top)||0;
+    function mv(ev){
+      ev.preventDefault();
+      const dx=ev.clientX-sx,dy=ev.clientY-sy;
+      img.style.left=(startL+dx)+'px';
+      img.style.top=(startT+dy)+'px';
+      tePositionImgH(img);
+    }
+    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+    document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+  });
+  _h.appendChild(_mv);
+
+  // مقابض الحجم — فقط الزاويتين الأيسر والأيمن من الأسفل (الأكثر طبيعية)
+  [{c:'sw',css:'bottom:-10px;left:-10px;cursor:nesw-resize;'},
+   {c:'se',css:'bottom:-10px;right:-10px;cursor:nwse-resize;'}].forEach(({c,css})=>{
     const d=document.createElement('div');d.dataset.c=c;
-    d.style.cssText='position:absolute;width:20px;height:20px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;';
-    if(c==='nw')d.style.cssText+='top:-10px;left:-10px;cursor:nwse-resize;';
-    if(c==='ne')d.style.cssText+='top:-10px;right:-10px;cursor:nesw-resize;';
-    if(c==='sw')d.style.cssText+='bottom:-10px;left:-10px;cursor:nesw-resize;';
-    if(c==='se')d.style.cssText+='bottom:-10px;right:-10px;cursor:nwse-resize;';
+    d.style.cssText='position:absolute;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;'+css;
     d.addEventListener('pointerdown',e=>{
       const img=window._teCurImg;if(!img)return;
       e.preventDefault();e.stopPropagation();
@@ -2420,8 +2449,8 @@ function buildTextEditor(){
       function mv(ev){
         ev.preventDefault();
         const dx=ev.clientX-sx,dy=ev.clientY-sy;
-        img.style.width=Math.max(30,c==='nw'||c==='sw'?sw-dx:sw+dx)+'px';
-        img.style.height=Math.max(30,c==='nw'||c==='ne'?sh-dy:sh+dy)+'px';
+        img.style.width=Math.max(30,c==='sw'?sw-dx:sw+dx)+'px';
+        img.style.height=Math.max(30,sh+dy)+'px';
         tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
@@ -2429,6 +2458,8 @@ function buildTextEditor(){
     });
     _h.appendChild(d);
   });
+
+  // زر الحذف
   const _del=document.createElement('div');_del.textContent='X';
   _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
   _del.addEventListener('pointerdown',e=>{
@@ -2437,12 +2468,13 @@ function buildTextEditor(){
   });
   _h.appendChild(_del);
   document.body.appendChild(_h);
+
   document.addEventListener('pointerdown',e=>{
     if(e.target.tagName==='IMG'||_h.contains(e.target))return;
     _h.style.display='none';window._teCurImg=null;
   });
 
-  // منع كل أحداث الصورة من الوصول لـ Quill (يمنع فتح الكيبورد)
+  // منع الكيبورد عند لمس الصورة
   ['touchstart','touchend','touchmove','mousedown','click'].forEach(ev=>{
     window._teQuill.root.addEventListener(ev,function(e){
       if(e.target.tagName==='IMG'){
@@ -2459,12 +2491,19 @@ function buildTextEditor(){
     },{passive:false,capture:true});
   });
 
-  // إعادة تموضع المقابض عند تغيّر حجم الشاشة
-  window.addEventListener('resize',function(){
-    if(window._teCurImg&&_h.style.display==='block'){
-      setTimeout(()=>tePositionImgH(window._teCurImg),100);
-    }
-  });
+  // إصلاح مشكلة انزياح الصفحة عند فتح الكيبورد
+  if(window.visualViewport){
+    const onVP=()=>{
+      const sheet=document.querySelector('.sheet');
+      if(sheet){
+        const diff=window.innerHeight-window.visualViewport.height;
+        sheet.style.transform=diff>100?`translateY(-${diff}px)`:'';
+      }
+      if(window._teCurImg)tePositionImgH(window._teCurImg);
+    };
+    window.visualViewport.addEventListener('resize',onVP);
+    window.visualViewport.addEventListener('scroll',onVP);
+  }
 
   // تلميحات عند الضغط المطوّل
   const tb=document.getElementById('teToolbar');
