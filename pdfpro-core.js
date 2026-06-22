@@ -2384,6 +2384,24 @@ function buildTextEditor(){
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
 
+  // احفظ آخر تحديد دائماً
+  window._teLastRange=null;
+  window._teQuill.on('selection-change',function(range){
+    if(range)window._teLastRange=range;
+  });
+
+  // أضف handler مخصص للخط يستخدم آخر تحديد محفوظ
+  window._teQuill.getModule('toolbar').addHandler('font',function(val){
+    const range=window._teQuill.getSelection()||window._teLastRange;
+    if(!range)return;
+    if(range.length>0){
+      window._teQuill.formatText(range.index,range.length,'font',val||false);
+    }else{
+      window._teQuill.setSelection(range.index,0);
+      window._teQuill.format('font',val||false);
+    }
+  });
+
   // مقابض تغيير حجم الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
@@ -2424,10 +2442,11 @@ function buildTextEditor(){
     _h.style.display='none';window._teCurImg=null;
   });
 
-  // اكتشاف لمس الصورة — touchstart مع preventDefault يمنع zoom المتصفح
+  // اكتشاف لمس الصورة — نمنع Quill من معالجة اللمس عشان ما يفتح الكيبورد
   window._teQuill.root.addEventListener('touchstart',function(e){
     if(e.target.tagName==='IMG'){
       e.preventDefault();
+      e.stopPropagation();
       window._teCurImg=e.target;
       tePositionImgH(e.target);
       _h.style.display='block';
@@ -2435,7 +2454,14 @@ function buildTextEditor(){
       _h.style.display='none';
       window._teCurImg=null;
     }
-  },{passive:false});
+  },{passive:false,capture:true});
+
+  // إعادة تموضع المقابض عند تغيّر حجم الشاشة (فتح/إغلاق الكيبورد)
+  window.addEventListener('resize',function(){
+    if(window._teCurImg&&_h.style.display==='block'){
+      setTimeout(()=>tePositionImgH(window._teCurImg),100);
+    }
+  });
 
   // تلميحات عند الضغط المطوّل
   const tb=document.getElementById('teToolbar');
