@@ -2510,19 +2510,12 @@ function buildTextEditor(){
     },{passive:false,capture:true});
   });
 
-  // إصلاح مشكلة انزياح الصفحة عند فتح الكيبورد
-  if(window.visualViewport){
-    const onVP=()=>{
-      const sheet=document.querySelector('.sheet');
-      if(sheet){
-        const diff=window.innerHeight-window.visualViewport.height;
-        sheet.style.transform=diff>100?`translateY(-${diff}px)`:'';
-      }
-      if(window._teCurImg)tePositionImgH(window._teCurImg);
-    };
-    window.visualViewport.addEventListener('resize',onVP);
-    window.visualViewport.addEventListener('scroll',onVP);
-  }
+  // إعادة تموضع المقابض عند تغيّر حجم الشاشة
+  window.addEventListener('resize',function(){
+    if(window._teCurImg&&_h.style.display==='block'){
+      setTimeout(()=>tePositionImgH(window._teCurImg),150);
+    }
+  });
 
   // تلميحات عند الضغط المطوّل
   const tb=document.getElementById('teToolbar');
