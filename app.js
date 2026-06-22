@@ -2320,10 +2320,14 @@ function doNote(){
 function buildTextEditor(){
   document.getElementById('sheetBody').innerHTML=`
     ${desc('محرر نصوص احترافي. أضف نصاً وصوراً ونسّقها بحرية، ثم اطبع أو احفظ كملف PDF.','A professional text editor. Add and format text and images freely, then print or save as a PDF file.')}
-    <div id="teCard" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px;position:relative">
+    <div id="teCard" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:6px;position:relative">
       <div id="teEditor"></div>
     </div>
-    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة، ثم اسحب من أطرافها لتغيير الحجم، أو اضغط × لحذفها.':'Long-press any button to see what it does. Tap an image then drag its edges to resize, or tap × to delete.'}</p>
+    <div id="teSizeRow" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px;background:var(--card);border-radius:10px;border:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text2);align-self:center;margin-${_lang==='ar'?'left':'right'}:4px">${_lang==='ar'?'الحجم:':'Size:'}</span>
+      ${[10,12,14,16,18,20,24,28,32,40,48].map(s=>`<button onclick="teApplySize('${s}px')" style="padding:4px 8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;min-width:34px">${s}</button>`).join('')}
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 12px">${_lang==='ar'?'اضغط على أي صورة لتظهر مقابض التحجيم بزواياها — اسحب أي زاوية لتغيير الحجم، أو اضغط × لحذفها.':'Tap any image to show resize handles at its corners — drag to resize, or tap × to delete.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
     <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
     <div style="display:flex;gap:8px">
@@ -2334,19 +2338,17 @@ function buildTextEditor(){
       <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ باسم PDF':'Save as PDF'}</button>
     </div>`;
 
-  // تسجيل الأحجام والخطوط — يُنفَّذ مرة واحدة فقط طوال عمر الصفحة
+  // تسجيل attributors — مرة واحدة فقط لكل session
   if(!window._teFontReg){
     try{
-      // حجم الخط — style attributor يطبّق font-size inline مباشرة
       const SizeStyle=Quill.import('attributors/style/size');
       SizeStyle.whitelist=['10px','12px','14px','16px','18px','20px','24px','28px','32px','40px','48px'];
       Quill.register(SizeStyle,true);
-      // نوع الخط — style attributor يطبّق font-family inline مباشرة
       const FontStyle=Quill.import('attributors/style/font');
       FontStyle.whitelist=['Arial','Tahoma','Courier New','Times New Roman','Georgia'];
       Quill.register(FontStyle,true);
-    }catch(e){console.warn('Quill register:',e);}
-    window._teFontReg=true;
+      window._teFontReg=true;
+    }catch(e){console.warn(e);}
   }
 
   window._teQuill=new Quill('#teEditor',{
@@ -2354,19 +2356,14 @@ function buildTextEditor(){
     modules:{
       toolbar:{
         container:[
-          [{font:['Arial','Tahoma','Courier New','Times New Roman','Georgia',false]},
-           {size:['10px','12px','14px','16px','18px','20px','24px','28px','32px','40px','48px',false]}],
+          [{font:['Arial','Tahoma','Courier New','Times New Roman','Georgia',false]}],
           ['bold','italic','underline'],
           [{color:[]},{background:[]}],
           [{align:[]}],
           [{list:'ordered'},{list:'bullet'}],
           ['image','clean']
         ],
-        handlers:{
-          // معالج مخصص يضمن تطبيق الحجم حتى لو لم يكن هناك تحديد نصي
-          size:function(val){this.quill.format('size',val||false,Quill.sources.USER);},
-          font:function(val){this.quill.format('font',val||false,Quill.sources.USER);}
-        }
+        handlers:{font:function(v){this.quill.format('font',v||false,Quill.sources.USER);}}
       }
     }
   });
@@ -2375,11 +2372,27 @@ function buildTextEditor(){
   teToolbarTooltips();
   teSetupImageControls();
 }
+// تطبيق حجم الخط مباشرة بشكل مضمون
+function teApplySize(px){
+  const q=window._teQuill;if(!q)return;
+  // إعادة التركيز على المحرر أولاً
+  q.focus();
+  const range=q.getSelection(true);
+  if(range&&range.length>0){
+    q.formatText(range.index,range.length,'size',px,Quill.sources.USER);
+  }else{
+    q.format('size',px,Quill.sources.USER);
+  }
+  // تمييز الزر المختار
+  document.querySelectorAll('#teSizeRow button').forEach(b=>{
+    b.style.background=b.textContent.trim()===px.replace('px','')?'var(--red)':'var(--card2)';
+    b.style.color=b.textContent.trim()===px.replace('px','')?'white':'var(--text)';
+  });
+}
 function teToolbarTooltips(){
   const tb=document.querySelector('#teCard .ql-toolbar');if(!tb)return;
   const tipMap={
     'ql-font':_lang==='ar'?'نوع الخط':'Font',
-    'ql-size':_lang==='ar'?'حجم الخط':'Font Size',
     'ql-bold':_lang==='ar'?'عريض':'Bold',
     'ql-italic':_lang==='ar'?'مائل':'Italic',
     'ql-underline':_lang==='ar'?'تسطير':'Underline',
@@ -2392,9 +2405,8 @@ function teToolbarTooltips(){
   tb.querySelectorAll('.ql-picker,.ql-formats button').forEach(el=>{
     for(const cls in tipMap){
       if(el.classList.contains(cls)){
-        const lbl=el.classList.contains('ql-picker')?el.querySelector('.ql-picker-label'):el;
-        if(lbl)lbl.title=tipMap[cls];
-        break;
+        const t=el.classList.contains('ql-picker')?el.querySelector('.ql-picker-label'):el;
+        if(t)t.title=tipMap[cls];break;
       }
     }
   });
@@ -2410,99 +2422,73 @@ function teToolbarTooltips(){
   tb.addEventListener('touchend',e=>{clearTimeout(timer);if(longPressed){e.preventDefault();e.stopPropagation();}},{passive:false});
   tb.addEventListener('touchmove',()=>clearTimeout(timer),{passive:true});
 }
-window._teState={curImg:null,handles:null,dragInfo:null};
+window._teState={curImg:null,handles:null};
 function teSetupImageControls(){
-  const root=window._teQuill.root;
-  const card=document.getElementById('teCard');
-
-  // أنشئ حاوية المقابض خارج منطقة الكتابة مباشرة
-  let handles=document.getElementById('teImgHandles');
-  if(handles)handles.remove();
-  handles=document.createElement('div');
-  handles.id='teImgHandles';
-  handles.style.cssText='display:none;position:fixed;z-index:9999;pointer-events:none;box-sizing:border-box;border:2px solid #e53935;';
+  // أنشئ إطار المقابض — position:fixed في body، خارج كل شيء
+  let h=document.getElementById('teImgHandles');
+  if(h)h.remove();
+  h=document.createElement('div');
+  h.id='teImgHandles';
+  h.style.cssText='display:none;position:fixed;z-index:9999;pointer-events:none;border:2px solid #e53935;box-sizing:border-box;';
   ['nw','ne','sw','se'].forEach(c=>{
     const d=document.createElement('div');
-    d.className='te-corner te-c-'+c;
-    d.style.pointerEvents='auto';
-    d.dataset.corner=c;
-    handles.appendChild(d);
+    d.className='te-corner te-c-'+c;d.dataset.corner=c;d.style.pointerEvents='auto';
+    h.appendChild(d);
   });
   const del=document.createElement('div');
-  del.className='te-img-del';del.textContent='✕';
-  del.style.cssText='position:absolute;top:-14px;right:-14px;width:24px;height:24px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:12px;line-height:20px;text-align:center;cursor:pointer;pointer-events:auto;z-index:2;';
-  handles.appendChild(del);
-  document.body.appendChild(handles);
-  window._teState.handles=handles;
+  del.textContent='✕';
+  del.style.cssText='position:absolute;top:-14px;right:-14px;width:26px;height:26px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:13px;line-height:22px;text-align:center;cursor:pointer;pointer-events:auto;';
+  h.appendChild(del);
+  document.body.appendChild(h);
+  window._teState.handles=h;
 
-  function showHandles(img){
+  function showH(img){
     window._teState.curImg=img;
     const r=img.getBoundingClientRect();
-    handles.style.left=r.left+'px';handles.style.top=r.top+'px';
-    handles.style.width=r.width+'px';handles.style.height=r.height+'px';
-    handles.style.display='block';
+    h.style.left=r.left+'px';h.style.top=r.top+'px';
+    h.style.width=r.width+'px';h.style.height=r.height+'px';
+    h.style.display='block';
   }
-  function hideHandles(){handles.style.display='none';window._teState.curImg=null;}
-  window._teShowImgHandles=showHandles;
-  window._teHideImgHandles=hideHandles;
+  function hideH(){h.style.display='none';window._teState.curImg=null;}
 
-  // استخدم pointerdown بدل click — أكثر موثوقية على Android
-  root.addEventListener('pointerdown',e=>{
-    if(e.target.tagName==='IMG'){
-      e.preventDefault();
-      setTimeout(()=>showHandles(e.target),30);
-    }else{
-      hideHandles();
-    }
+  // الحدث الأساسي: selection-change من Quill (الوحيد الموثوق على Android)
+  window._teQuill.on('selection-change',function(range){
+    if(!range){hideH();return;}
+    try{
+      const[leaf]=window._teQuill.getLeaf(range.index);
+      if(leaf&&leaf.domNode&&leaf.domNode.tagName==='IMG'){
+        setTimeout(()=>showH(leaf.domNode),20);
+      }else{
+        hideH();
+      }
+    }catch(e){hideH();}
   });
 
   del.addEventListener('pointerdown',e=>{
     e.stopPropagation();e.preventDefault();
-    if(window._teState.curImg){window._teState.curImg.remove();hideHandles();toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
+    if(window._teState.curImg){window._teState.curImg.remove();hideH();toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
   });
 
-  // سحب المقابض لتغيير الحجم
-  handles.querySelectorAll('.te-corner').forEach(h=>{
-    h.addEventListener('pointerdown',e=>{
-      if(!window._teState.curImg)return;
+  h.querySelectorAll('.te-corner').forEach(corner=>{
+    corner.addEventListener('pointerdown',e=>{
+      const img=window._teState.curImg;if(!img)return;
       e.preventDefault();e.stopPropagation();
-      const img=window._teState.curImg;
-      const corner=h.dataset.corner;
-      const startX=e.clientX,startY=e.clientY;
-      const startW=img.offsetWidth,startH=img.offsetHeight;
-      const startR=img.getBoundingClientRect();
-
-      function onMove(ev){
+      const c=corner.dataset.corner;
+      const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
+      function mv(ev){
         ev.preventDefault();
-        const dx=ev.clientX-startX,dy=ev.clientY-startY;
-        let nw=startW,nh=startH;
-        if(corner==='se'){nw=Math.max(30,startW+dx);nh=Math.max(30,startH+dy);}
-        else if(corner==='sw'){nw=Math.max(30,startW-dx);nh=Math.max(30,startH+dy);}
-        else if(corner==='ne'){nw=Math.max(30,startW+dx);nh=Math.max(30,startH-dy);}
-        else if(corner==='nw'){nw=Math.max(30,startW-dx);nh=Math.max(30,startH-dy);}
+        const dx=ev.clientX-sx,dy=ev.clientY-sy;
+        const nw=Math.max(30,c==='nw'||c==='sw'?sw-dx:sw+dx);
+        const nh=Math.max(30,c==='nw'||c==='ne'?sh-dy:sh+dy);
         img.style.width=nw+'px';img.style.height=nh+'px';
-        // حدّث موضع المقابض
         const r=img.getBoundingClientRect();
-        handles.style.left=r.left+'px';handles.style.top=r.top+'px';
-        handles.style.width=r.width+'px';handles.style.height=r.height+'px';
+        h.style.left=r.left+'px';h.style.top=r.top+'px';
+        h.style.width=r.width+'px';h.style.height=r.height+'px';
       }
-      function onEnd(){
-        document.removeEventListener('pointermove',onMove);
-        document.removeEventListener('pointerup',onEnd);
-      }
-      document.addEventListener('pointermove',onMove);
-      document.addEventListener('pointerup',onEnd);
+      function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+      document.addEventListener('pointermove',mv);
+      document.addEventListener('pointerup',up);
     });
-  });
-
-  // أخفِ المقابض عند النقر خارج المحرر أو التمرير
-  document.addEventListener('pointerdown',e=>{
-    if(!window._teState.curImg)return;
-    if(e.target.tagName==='IMG'||handles.contains(e.target))return;
-    hideHandles();
-  });
-  card.addEventListener('scroll',()=>{
-    if(window._teState.curImg)showHandles(window._teState.curImg);
   });
 }
 function tePrint(){
