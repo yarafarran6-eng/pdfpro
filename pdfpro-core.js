@@ -2318,61 +2318,66 @@ function doNote(){
 
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
-  document.getElementById('sheetBody').innerHTML=`
-    ${desc('محرر نصوص احترافي. أضف نصاً وصوراً ونسّقها بحرية، ثم اطبع أو احفظ كملف PDF.','Professional text editor. Add and format text and images freely, then print or save as PDF.')}
-    <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px">
-      <div id="teToolbar">
+  const ar=_lang==='ar';
+  const fs=document.getElementById('teFullscreen');
+  const fb=document.getElementById('teFullBody');
+  if(!fs||!fb)return;
+  fs.style.display='flex';
+
+  // تعديل عنوان الشاشة الكاملة
+  const titleEl=fs.querySelector('span');
+  if(titleEl)titleEl.textContent=ar?'محرر النصوص':'Text Editor';
+
+  fb.innerHTML=`
+    <div style="background:#fff;flex:1;display:flex;flex-direction:column;">
+      <div id="teToolbar" style="position:sticky;top:0;z-index:10;">
         <span class="ql-formats">
-          <select class="ql-font" title="${_lang==='ar'?'نوع الخط':'Font'}">
-            <option selected>${_lang==='ar'?'افتراضي':'Default'}</option>
+          <select class="ql-font" title="${ar?'نوع الخط':'Font'}">
+            <option selected>${ar?'افتراضي':'Default'}</option>
             <option value="arial">Arial</option>
-            <option value="times">Times New Roman</option>
-            <option value="courier">Courier New</option>
+            <option value="times">Times NR</option>
+            <option value="courier">Courier</option>
             <option value="tahoma">Tahoma</option>
           </select>
-          <select class="ql-size" title="${_lang==='ar'?'حجم الخط':'Font Size'}">
-            <option value="12px">12</option>
-            <option value="14px" selected>14</option>
-            <option value="16px">16</option>
-            <option value="18px">18</option>
-            <option value="24px">24</option>
-            <option value="32px">32</option>
+          <select class="ql-size" title="${ar?'حجم الخط':'Size'}">
+            <option value="12px">12</option><option value="14px" selected>14</option>
+            <option value="16px">16</option><option value="18px">18</option>
+            <option value="24px">24</option><option value="32px">32</option>
             <option value="48px">48</option>
           </select>
         </span>
         <span class="ql-formats">
-          <button class="ql-bold" title="${_lang==='ar'?'عريض':'Bold'}"></button>
-          <button class="ql-italic" title="${_lang==='ar'?'مائل':'Italic'}"></button>
-          <button class="ql-underline" title="${_lang==='ar'?'تسطير':'Underline'}"></button>
+          <button class="ql-bold" title="${ar?'عريض':'Bold'}"></button>
+          <button class="ql-italic" title="${ar?'مائل':'Italic'}"></button>
+          <button class="ql-underline" title="${ar?'تسطير':'Underline'}"></button>
         </span>
         <span class="ql-formats">
-          <select class="ql-color" title="${_lang==='ar'?'لون النص':'Text Color'}"></select>
-          <select class="ql-background" title="${_lang==='ar'?'لون التظليل':'Highlight Color'}"></select>
+          <select class="ql-color" title="${ar?'لون النص':'Color'}"></select>
+          <select class="ql-background" title="${ar?'تظليل':'Highlight'}"></select>
         </span>
         <span class="ql-formats">
-          <select class="ql-align" title="${_lang==='ar'?'محاذاة':'Align'}"></select>
+          <select class="ql-align" title="${ar?'محاذاة':'Align'}"></select>
         </span>
         <span class="ql-formats">
-          <button class="ql-list" value="ordered" title="${_lang==='ar'?'قائمة مرقّمة':'Numbered List'}"></button>
-          <button class="ql-list" value="bullet" title="${_lang==='ar'?'قائمة نقطية':'Bullet List'}"></button>
+          <button class="ql-list" value="ordered" title="${ar?'قائمة مرقّمة':'Numbered'}"></button>
+          <button class="ql-list" value="bullet" title="${ar?'قائمة نقطية':'Bullets'}"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-image" title="${_lang==='ar'?'إدراج صورة':'Insert Image'}"></button>
-        </span>
-        <span class="ql-formats">
-          <button class="ql-clean" title="${_lang==='ar'?'إزالة التنسيق':'Clear Formatting'}"></button>
+          <button class="ql-image" title="${ar?'صورة':'Image'}"></button>
+          <button class="ql-clean" title="${ar?'إزالة تنسيق':'Clear'}"></button>
         </span>
       </div>
-      <div id="tePage"><div id="teEditor"></div></div>
+      <div id="teEditor" style="flex:1;"></div>
     </div>
-    <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
-    <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
-    <div style="display:flex;gap:8px">
-      <button style="flex:1;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="tePrint()">${_lang==='ar'?'طباعة':'Print'}</button>
-      <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ PDF':'Save PDF'}</button>
+    <div style="padding:12px;background:var(--bg);">
+      <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
+      <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button style="flex:1;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="tePrint()">${ar?'طباعة':'Print'}</button>
+        <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${ar?'حفظ PDF':'Save PDF'}</button>
+      </div>
     </div>`;
 
-  // تسجيل مرة واحدة فقط طوال عمر الصفحة
   if(!window._teFontReg){
     try{
       const Font=Quill.import('formats/font');
@@ -2384,26 +2389,19 @@ function buildTextEditor(){
       window._teFontReg=true;
     }catch(e){console.warn(e);}
   }
+
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
-  window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
-  window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
+  window._teQuill.root.setAttribute('dir',ar?'rtl':'ltr');
+  window._teQuill.root.style.textAlign=ar?'right':'left';
 
-  // احفظ آخر تحديد دائماً
+  // حفظ آخر تحديد + handler مخصص للخط
   window._teLastRange=null;
-  window._teQuill.on('selection-change',function(range){
-    if(range)window._teLastRange=range;
-  });
-
-  // handler مخصص للخط يستخدم آخر تحديد محفوظ
+  window._teQuill.on('selection-change',function(range){if(range)window._teLastRange=range;});
   window._teQuill.getModule('toolbar').addHandler('font',function(val){
     const range=window._teQuill.getSelection()||window._teLastRange;
     if(!range)return;
-    if(range.length>0){
-      window._teQuill.formatText(range.index,range.length,'font',val||false);
-    }else{
-      window._teQuill.setSelection(range.index,0);
-      window._teQuill.format('font',val||false);
-    }
+    if(range.length>0){window._teQuill.formatText(range.index,range.length,'font',val||false);}
+    else{window._teQuill.setSelection(range.index,0);window._teQuill.format('font',val||false);}
   });
 
   // مقابض الصورة
@@ -2411,65 +2409,48 @@ function buildTextEditor(){
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
 
-  // زر سحب لتحريك الصورة (المنتصف)
+  // زر التحريك (المنتصف)
   const _mv=document.createElement('div');
-  _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:rgba(229,57,53,0.85);border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;display:flex;align-items:center;justify-content:center;';
-  _mv.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
+  _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;background:rgba(229,57,53,0.85);border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;';
+  _mv.innerHTML='<svg style="margin:6px" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
   _mv.addEventListener('pointerdown',e=>{
-    const img=window._teCurImg;if(!img)return;
-    e.preventDefault();e.stopPropagation();
-    const sx=e.clientX,sy=e.clientY;
-    const origX=img.offsetLeft,origY=img.offsetTop;
+    const img=window._teCurImg;if(!img)return;e.preventDefault();e.stopPropagation();
     img.style.position='relative';
-    img.style.left=(img.style.left?parseInt(img.style.left):0)+'px';
-    img.style.top=(img.style.top?parseInt(img.style.top):0)+'px';
-    const startL=parseInt(img.style.left)||0;
-    const startT=parseInt(img.style.top)||0;
-    function mv(ev){
-      ev.preventDefault();
-      const dx=ev.clientX-sx,dy=ev.clientY-sy;
-      img.style.left=(startL+dx)+'px';
-      img.style.top=(startT+dy)+'px';
-      tePositionImgH(img);
-    }
+    const sx=e.clientX,sy=e.clientY,sl=parseInt(img.style.left)||0,st=parseInt(img.style.top)||0;
+    function mv(ev){ev.preventDefault();img.style.left=(sl+ev.clientX-sx)+'px';img.style.top=(st+ev.clientY-sy)+'px';tePositionImgH(img);}
     function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
     document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
   });
   _h.appendChild(_mv);
 
-  // مقابض الحجم — الأطراف الأربعة
-  [{c:'nw',css:'top:-10px;left:-10px;cursor:nwse-resize;'},
-   {c:'ne',css:'top:-10px;right:-10px;cursor:nesw-resize;'},
-   {c:'sw',css:'bottom:-10px;left:-10px;cursor:nesw-resize;'},
-   {c:'se',css:'bottom:-10px;right:-10px;cursor:nwse-resize;'}].forEach(({c,css})=>{
-    const d=document.createElement('div');d.dataset.c=c;
-    d.style.cssText='position:absolute;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;'+css;
+  // مقابض الأطراف الأربعة والأضلاع الأربعة
+  const handles=[
+    {id:'nw',css:'top:-9px;left:-9px;cursor:nwse-resize;',type:'corner'},
+    {id:'ne',css:'top:-9px;right:-9px;cursor:nesw-resize;',type:'corner'},
+    {id:'sw',css:'bottom:-9px;left:-9px;cursor:nesw-resize;',type:'corner'},
+    {id:'se',css:'bottom:-9px;right:-9px;cursor:nwse-resize;',type:'corner'},
+    {id:'n', css:'top:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;',type:'edge'},
+    {id:'s', css:'bottom:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;',type:'edge'},
+    {id:'w', css:'top:50%;left:-9px;transform:translateY(-50%);cursor:ew-resize;',type:'edge'},
+    {id:'e', css:'top:50%;right:-9px;transform:translateY(-50%);cursor:ew-resize;',type:'edge'},
+  ];
+  handles.forEach(({id,css,type})=>{
+    const d=document.createElement('div');d.dataset.id=id;
+    d.style.cssText='position:absolute;width:18px;height:18px;background:#e53935;border:2px solid #fff;border-radius:3px;pointer-events:auto;touch-action:none;'+css;
     d.addEventListener('pointerdown',e=>{
-      const img=window._teCurImg;if(!img)return;
-      e.preventDefault();e.stopPropagation();
+      const img=window._teCurImg;if(!img)return;e.preventDefault();e.stopPropagation();
       img.style.position='relative';
-      const sx=e.clientX,sy=e.clientY;
-      const sw=img.offsetWidth,sh=img.offsetHeight;
+      const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
       const sl=parseInt(img.style.left)||0,st=parseInt(img.style.top)||0;
       function mv(ev){
         ev.preventDefault();
         const dx=ev.clientX-sx,dy=ev.clientY-sy;
         // العرض
-        if(c==='nw'||c==='sw'){
-          const nw=Math.max(30,sw-dx);
-          img.style.width=nw+'px';
-          img.style.left=(sl+(sw-nw))+'px';
-        }else{
-          img.style.width=Math.max(30,sw+dx)+'px';
-        }
-        // الارتفاع
-        if(c==='nw'||c==='ne'){
-          const nh=Math.max(30,sh-dy);
-          img.style.height=nh+'px';
-          img.style.top=(st+(sh-nh))+'px';
-        }else{
-          img.style.height=Math.max(30,sh+dy)+'px';
-        }
+        if(id==='nw'||id==='sw'||id==='w'){const nw=Math.max(30,sw-dx);img.style.width=nw+'px';img.style.left=(sl+(sw-nw))+'px';}
+        else if(id==='ne'||id==='se'||id==='e'){img.style.width=Math.max(30,sw+dx)+'px';}
+        // الارتفاع — فقط للأضلاع العلوية والسفلية والأركان (بدون تشويه: نغير الحجم بدون تغيير height مع width معاً)
+        if(id==='nw'||id==='ne'||id==='n'){const nh=Math.max(30,sh-dy);img.style.height=nh+'px';img.style.top=(st+(sh-nh))+'px';}
+        else if(id==='sw'||id==='se'||id==='s'){img.style.height=Math.max(30,sh+dy)+'px';}
         tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
@@ -2481,52 +2462,33 @@ function buildTextEditor(){
   // زر الحذف
   const _del=document.createElement('div');_del.textContent='X';
   _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
-  _del.addEventListener('pointerdown',e=>{
-    e.stopPropagation();e.preventDefault();
-    if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
-  });
+  _del.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(ar?'تم الحذف':'Deleted','ok');}});
   _h.appendChild(_del);
   document.body.appendChild(_h);
 
-  document.addEventListener('pointerdown',e=>{
-    if(e.target.tagName==='IMG'||_h.contains(e.target))return;
-    _h.style.display='none';window._teCurImg=null;
-  });
+  document.addEventListener('pointerdown',e=>{if(e.target.tagName==='IMG'||_h.contains(e.target))return;_h.style.display='none';window._teCurImg=null;});
 
-  // منع الكيبورد عند لمس الصورة
   ['touchstart','touchend','touchmove','mousedown','click'].forEach(ev=>{
     window._teQuill.root.addEventListener(ev,function(e){
-      if(e.target.tagName==='IMG'){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        if(ev==='touchstart'){
-          window._teCurImg=e.target;
-          tePositionImgH(e.target);
-          _h.style.display='block';
-        }
-      }else if(ev==='touchstart'&&!_h.contains(e.target)){
-        _h.style.display='none';window._teCurImg=null;
-      }
+      if(e.target.tagName==='IMG'){e.preventDefault();e.stopImmediatePropagation();
+        if(ev==='touchstart'){window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';}
+      }else if(ev==='touchstart'&&!_h.contains(e.target)){_h.style.display='none';window._teCurImg=null;}
     },{passive:false,capture:true});
   });
 
-  // إعادة تموضع المقابض عند تغيّر حجم الشاشة
-  window.addEventListener('resize',function(){
-    if(window._teCurImg&&_h.style.display==='block'){
-      setTimeout(()=>tePositionImgH(window._teCurImg),150);
-    }
-  });
+  window.addEventListener('resize',function(){if(window._teCurImg&&_h.style.display==='block')setTimeout(()=>tePositionImgH(window._teCurImg),150);});
 
-  // تلميحات عند الضغط المطوّل
-  const tb=document.getElementById('teToolbar');
-  let _timer=null,_lp=false;
-  tb.addEventListener('touchstart',e=>{
-    const t=e.target.closest('[title]');_lp=false;clearTimeout(_timer);
-    if(!t||!t.title)return;
-    _timer=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);
-  },{passive:true});
-  tb.addEventListener('touchend',e=>{clearTimeout(_timer);if(_lp){e.preventDefault();e.stopPropagation();}},{passive:false});
-  tb.addEventListener('touchmove',()=>clearTimeout(_timer),{passive:true});
+  // تلميحات ضغط مطوّل
+  const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
+  tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
+  tb.addEventListener('touchend',e=>{clearTimeout(_tmr);if(_lp){e.preventDefault();e.stopPropagation();}},{passive:false});
+  tb.addEventListener('touchmove',()=>clearTimeout(_tmr),{passive:true});
+}
+function teCloseFullscreen(){
+  const fs=document.getElementById('teFullscreen');
+  if(fs)fs.style.display='none';
+  window._teQuill=null;
+  const _h=document.getElementById('teImgH');if(_h)_h.remove();
 }
 function tePositionImgH(img){var _h=document.getElementById("teImgH");if(!_h||!img)return;var r=img.getBoundingClientRect();_h.style.left=r.left+"px";_h.style.top=r.top+"px";_h.style.width=r.width+"px";_h.style.height=r.height+"px";}
 
