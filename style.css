@@ -207,14 +207,14 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 #tePage .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
 
 /* محرر النصوص — خطوط وأحجام */
-.ql-font-arial{font-family:Arial,sans-serif;}
-.ql-font-times{font-family:'Times New Roman',serif;}
-.ql-font-courier{font-family:'Courier New',monospace;}
-.ql-font-tahoma{font-family:Tahoma,sans-serif;}
-.ql-picker.ql-font .ql-picker-item[data-value=arial]::before,.ql-picker.ql-font .ql-picker-label[data-value=arial]::before{content:'Arial';font-family:Arial,sans-serif;}
-.ql-picker.ql-font .ql-picker-item[data-value=times]::before,.ql-picker.ql-font .ql-picker-label[data-value=times]::before{content:'Times NR';font-family:'Times New Roman',serif;}
-.ql-picker.ql-font .ql-picker-item[data-value=courier]::before,.ql-picker.ql-font .ql-picker-label[data-value=courier]::before{content:'Courier';font-family:'Courier New',monospace;}
-.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before{content:'Tahoma';font-family:Tahoma,sans-serif;}
+.ql-editor .ql-font-arial{font-family:Arial,sans-serif;}
+.ql-editor .ql-font-times{font-family:'Times New Roman',serif;}
+.ql-editor .ql-font-courier{font-family:'Courier New',monospace;}
+.ql-editor .ql-font-tahoma{font-family:Tahoma,sans-serif;}
+.ql-picker.ql-font .ql-picker-item[data-value=arial]::before,.ql-picker.ql-font .ql-picker-label[data-value=arial]::before{content:'Arial';}
+.ql-picker.ql-font .ql-picker-item[data-value=times]::before,.ql-picker.ql-font .ql-picker-label[data-value=times]::before{content:'Times NR';}
+.ql-picker.ql-font .ql-picker-item[data-value=courier]::before,.ql-picker.ql-font .ql-picker-label[data-value=courier]::before{content:'Courier';}
+.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before{content:'Tahoma';}
 .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="12px"]::before{content:'12';}
 .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="14px"]::before{content:'14';}
 .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="16px"]::before{content:'16';}
@@ -222,3 +222,4 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="24px"]::before{content:'24';}
 .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="32px"]::before{content:'32';}
 .ql-picker.ql-size .ql-picker-item[data-value="48px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="48px"]::before{content:'48';}
+.ql-editor img{touch-action:none;}
