@@ -2323,7 +2323,7 @@ function buildTextEditor(){
     <div id="teCard" style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35);margin-bottom:14px;position:relative">
       <div id="teEditor"></div>
     </div>
-    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة، ثم اسحب من أطرافها لتغيير الطول أو العرض، أو اضغط × لحذفها.':'Long-press any button to see what it does. Tap an image, then drag its edges to resize, or tap × to delete it.'}</p>
+    <p style="font-size:11px;color:var(--text3);margin:-8px 0 12px">${_lang==='ar'?'اضغط مطوّلاً على أي زر لمعرفة وظيفته. اضغط على أي صورة، ثم اسحب من أطرافها لتغيير الحجم، أو اضغط × لحذفها.':'Long-press any button to see what it does. Tap an image then drag its edges to resize, or tap × to delete.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
     <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL">...</div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
     <div style="display:flex;gap:8px">
@@ -2333,33 +2333,43 @@ function buildTextEditor(){
       </button>
       <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ باسم PDF':'Save as PDF'}</button>
     </div>`;
+
+  // تسجيل الأحجام والخطوط — يُنفَّذ مرة واحدة فقط طوال عمر الصفحة
   if(!window._teFontReg){
     try{
-      const Font=Quill.import('attributors/class/font');
-      Font.whitelist=['arial','times','courier','tahoma'];
-      Quill.register(Font,true);
-      const Size=Quill.import('attributors/style/size');
-      Size.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
-      Quill.register(Size,true);
-      window._teFontReg=true;
-    }catch(e){toast('Font setup error: '+e.message,'err');}
+      // حجم الخط — style attributor يطبّق font-size inline مباشرة
+      const SizeStyle=Quill.import('attributors/style/size');
+      SizeStyle.whitelist=['10px','12px','14px','16px','18px','20px','24px','28px','32px','40px','48px'];
+      Quill.register(SizeStyle,true);
+      // نوع الخط — style attributor يطبّق font-family inline مباشرة
+      const FontStyle=Quill.import('attributors/style/font');
+      FontStyle.whitelist=['Arial','Tahoma','Courier New','Times New Roman','Georgia'];
+      Quill.register(FontStyle,true);
+    }catch(e){console.warn('Quill register:',e);}
+    window._teFontReg=true;
   }
-  try{
-    window._teQuill=new Quill('#teEditor',{
-      theme:'snow',
-      modules:{
-        toolbar:[
-          [{font:['arial','times','courier','tahoma',false]},{size:['12px','14px','16px','18px','24px','32px','48px',false]}],
+
+  window._teQuill=new Quill('#teEditor',{
+    theme:'snow',
+    modules:{
+      toolbar:{
+        container:[
+          [{font:['Arial','Tahoma','Courier New','Times New Roman','Georgia',false]},
+           {size:['10px','12px','14px','16px','18px','20px','24px','28px','32px','40px','48px',false]}],
           ['bold','italic','underline'],
           [{color:[]},{background:[]}],
           [{align:[]}],
           [{list:'ordered'},{list:'bullet'}],
-          ['image'],
-          ['clean']
-        ]
+          ['image','clean']
+        ],
+        handlers:{
+          // معالج مخصص يضمن تطبيق الحجم حتى لو لم يكن هناك تحديد نصي
+          size:function(val){this.quill.format('size',val||false,Quill.sources.USER);},
+          font:function(val){this.quill.format('font',val||false,Quill.sources.USER);}
+        }
       }
-    });
-  }catch(e){toast('Editor init error: '+e.message,'err');return;}
+    }
+  });
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
   teToolbarTooltips();
@@ -2379,107 +2389,121 @@ function teToolbarTooltips(){
     'ql-image':_lang==='ar'?'إدراج صورة':'Insert Image',
     'ql-clean':_lang==='ar'?'إزالة التنسيق':'Clear Formatting',
   };
-  tb.querySelectorAll('.ql-picker, button').forEach(el=>{
+  tb.querySelectorAll('.ql-picker,.ql-formats button').forEach(el=>{
     for(const cls in tipMap){
       if(el.classList.contains(cls)){
-        if(el.classList.contains('ql-picker')){
-          const lbl=el.querySelector('.ql-picker-label');
-          if(lbl)lbl.title=tipMap[cls];
-        }else{
-          el.title=tipMap[cls];
-        }
+        const lbl=el.classList.contains('ql-picker')?el.querySelector('.ql-picker-label'):el;
+        if(lbl)lbl.title=tipMap[cls];
         break;
       }
     }
   });
   tb.querySelectorAll('button.ql-list').forEach(btn=>{
-    btn.title=btn.getAttribute('value')==='ordered'?(_lang==='ar'?'قائمة مرقّمة':'Numbered List'):(_lang==='ar'?'قائمة نقطية':'Bullet List');
+    btn.title=btn.value==='ordered'?(_lang==='ar'?'قائمة مرقّمة':'Numbered List'):(_lang==='ar'?'قائمة نقطية':'Bullet List');
   });
   let timer=null,longPressed=false;
   tb.addEventListener('touchstart',e=>{
-    const t=e.target.closest('[title]');
-    longPressed=false;clearTimeout(timer);
+    const t=e.target.closest('[title]');longPressed=false;clearTimeout(timer);
     if(!t||!t.title)return;
     timer=setTimeout(()=>{longPressed=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);
   },{passive:true});
   tb.addEventListener('touchend',e=>{clearTimeout(timer);if(longPressed){e.preventDefault();e.stopPropagation();}},{passive:false});
   tb.addEventListener('touchmove',()=>clearTimeout(timer),{passive:true});
 }
-window._teState=window._teState||{curImg:null,handles:null,dragInfo:null};
+window._teState={curImg:null,handles:null,dragInfo:null};
 function teSetupImageControls(){
   const root=window._teQuill.root;
-  const pageEl=document.getElementById('teCard');
-  const handles=document.createElement('div');
+  const card=document.getElementById('teCard');
+
+  // أنشئ حاوية المقابض خارج منطقة الكتابة مباشرة
+  let handles=document.getElementById('teImgHandles');
+  if(handles)handles.remove();
+  handles=document.createElement('div');
   handles.id='teImgHandles';
-  handles.style.cssText='display:none;position:absolute;z-index:50;pointer-events:none;';
-  ['top','bottom','left','right'].forEach(p=>{
-    const d=document.createElement('div');d.className='te-img-handle te-h-'+p;d.dataset.pos=p;d.style.pointerEvents='auto';
+  handles.style.cssText='display:none;position:fixed;z-index:9999;pointer-events:none;box-sizing:border-box;border:2px solid #e53935;';
+  ['nw','ne','sw','se'].forEach(c=>{
+    const d=document.createElement('div');
+    d.className='te-corner te-c-'+c;
+    d.style.pointerEvents='auto';
+    d.dataset.corner=c;
     handles.appendChild(d);
   });
   const del=document.createElement('div');
-  del.id='teImgDelBtn';del.className='te-img-del';del.textContent='✕';del.title=_lang==='ar'?'حذف الصورة':'Delete image';
-  del.style.pointerEvents='auto';
+  del.className='te-img-del';del.textContent='✕';
+  del.style.cssText='position:absolute;top:-14px;right:-14px;width:24px;height:24px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:12px;line-height:20px;text-align:center;cursor:pointer;pointer-events:auto;z-index:2;';
   handles.appendChild(del);
-  pageEl.appendChild(handles);
-  window._teState.handles=handles;window._teState.curImg=null;
+  document.body.appendChild(handles);
+  window._teState.handles=handles;
 
-  function position(){
-    const img=window._teState.curImg;if(!img)return;
-    const pr=pageEl.getBoundingClientRect(),ir=img.getBoundingClientRect();
-    handles.style.left=(ir.left-pr.left)+'px';handles.style.top=(ir.top-pr.top)+'px';
-    handles.style.width=ir.width+'px';handles.style.height=ir.height+'px';
+  function showHandles(img){
+    window._teState.curImg=img;
+    const r=img.getBoundingClientRect();
+    handles.style.left=r.left+'px';handles.style.top=r.top+'px';
+    handles.style.width=r.width+'px';handles.style.height=r.height+'px';
+    handles.style.display='block';
   }
-  window._tePositionHandles=position;
+  function hideHandles(){handles.style.display='none';window._teState.curImg=null;}
+  window._teShowImgHandles=showHandles;
+  window._teHideImgHandles=hideHandles;
 
-  root.addEventListener('click',e=>{
+  // استخدم pointerdown بدل click — أكثر موثوقية على Android
+  root.addEventListener('pointerdown',e=>{
     if(e.target.tagName==='IMG'){
-      e.stopPropagation();window._teState.curImg=e.target;handles.style.display='block';position();
+      e.preventDefault();
+      setTimeout(()=>showHandles(e.target),30);
     }else{
-      handles.style.display='none';window._teState.curImg=null;
+      hideHandles();
     }
   });
-  del.addEventListener('click',e=>{
-    e.stopPropagation();
-    if(window._teState.curImg){window._teState.curImg.remove();handles.style.display='none';window._teState.curImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
-  });
-  handles.querySelectorAll('.te-img-handle').forEach(h=>{
-    const start=e=>{
-      if(!window._teState.curImg)return;e.preventDefault();e.stopPropagation();
-      const p=e.touches?e.touches[0]:e;
-      window._teState.dragInfo={pos:h.dataset.pos,startX:p.clientX,startY:p.clientY,startW:window._teState.curImg.offsetWidth,startH:window._teState.curImg.offsetHeight};
-    };
-    h.addEventListener('mousedown',start);
-    h.addEventListener('touchstart',start,{passive:false});
+
+  del.addEventListener('pointerdown',e=>{
+    e.stopPropagation();e.preventDefault();
+    if(window._teState.curImg){window._teState.curImg.remove();hideHandles();toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
   });
 
-  if(!window._teGlobalClickReady){
-    document.addEventListener('click',e=>{
-      const st=window._teState;if(!st.curImg)return;
-      if(e.target.tagName==='IMG'||(st.handles&&st.handles.contains(e.target)))return;
-      if(st.handles)st.handles.style.display='none';
-      st.curImg=null;
+  // سحب المقابض لتغيير الحجم
+  handles.querySelectorAll('.te-corner').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      if(!window._teState.curImg)return;
+      e.preventDefault();e.stopPropagation();
+      const img=window._teState.curImg;
+      const corner=h.dataset.corner;
+      const startX=e.clientX,startY=e.clientY;
+      const startW=img.offsetWidth,startH=img.offsetHeight;
+      const startR=img.getBoundingClientRect();
+
+      function onMove(ev){
+        ev.preventDefault();
+        const dx=ev.clientX-startX,dy=ev.clientY-startY;
+        let nw=startW,nh=startH;
+        if(corner==='se'){nw=Math.max(30,startW+dx);nh=Math.max(30,startH+dy);}
+        else if(corner==='sw'){nw=Math.max(30,startW-dx);nh=Math.max(30,startH+dy);}
+        else if(corner==='ne'){nw=Math.max(30,startW+dx);nh=Math.max(30,startH-dy);}
+        else if(corner==='nw'){nw=Math.max(30,startW-dx);nh=Math.max(30,startH-dy);}
+        img.style.width=nw+'px';img.style.height=nh+'px';
+        // حدّث موضع المقابض
+        const r=img.getBoundingClientRect();
+        handles.style.left=r.left+'px';handles.style.top=r.top+'px';
+        handles.style.width=r.width+'px';handles.style.height=r.height+'px';
+      }
+      function onEnd(){
+        document.removeEventListener('pointermove',onMove);
+        document.removeEventListener('pointerup',onEnd);
+      }
+      document.addEventListener('pointermove',onMove);
+      document.addEventListener('pointerup',onEnd);
     });
-    window._teGlobalClickReady=true;
-  }
-  if(!window._teGlobalDragReady){
-    const move=e=>{
-      const st=window._teState;if(!st.dragInfo||!st.curImg)return;
-      e.preventDefault();
-      const p=e.touches?e.touches[0]:e;
-      const dx=p.clientX-st.dragInfo.startX,dy=p.clientY-st.dragInfo.startY;
-      if(st.dragInfo.pos==='right')st.curImg.style.width=Math.max(30,st.dragInfo.startW+dx)+'px';
-      else if(st.dragInfo.pos==='left')st.curImg.style.width=Math.max(30,st.dragInfo.startW-dx)+'px';
-      else if(st.dragInfo.pos==='bottom')st.curImg.style.height=Math.max(30,st.dragInfo.startH+dy)+'px';
-      else if(st.dragInfo.pos==='top')st.curImg.style.height=Math.max(30,st.dragInfo.startH-dy)+'px';
-      if(window._tePositionHandles)window._tePositionHandles();
-    };
-    const end=()=>{window._teState.dragInfo=null;};
-    document.addEventListener('mousemove',move);
-    document.addEventListener('mouseup',end);
-    document.addEventListener('touchmove',move,{passive:false});
-    document.addEventListener('touchend',end);
-    window._teGlobalDragReady=true;
-  }
+  });
+
+  // أخفِ المقابض عند النقر خارج المحرر أو التمرير
+  document.addEventListener('pointerdown',e=>{
+    if(!window._teState.curImg)return;
+    if(e.target.tagName==='IMG'||handles.contains(e.target))return;
+    hideHandles();
+  });
+  card.addEventListener('scroll',()=>{
+    if(window._teState.curImg)showHandles(window._teState.curImg);
+  });
 }
 function tePrint(){
   if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
