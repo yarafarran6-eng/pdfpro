@@ -2372,18 +2372,14 @@ function buildTextEditor(){
       <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${_lang==='ar'?'حفظ PDF':'Save PDF'}</button>
     </div>`;
 
-  if(!window._teFontReg){
-    try{
-      // style attributors تطبّق font-family/font-size كـ inline style مباشرة
-      const FontStyle=Quill.import('attributors/style/font');
-      FontStyle.whitelist=['arial','times new roman','courier new','tahoma'];
-      Quill.register(FontStyle,true);
-      const SizeStyle=Quill.import('attributors/style/size');
-      SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
-      Quill.register(SizeStyle,true);
-    }catch(e){console.warn(e);}
-    window._teFontReg=true;
-  }
+  try{
+    const FontStyle=Quill.import('attributors/style/font');
+    FontStyle.whitelist=['arial','times','courier','tahoma'];
+    Quill.register(FontStyle,true);
+    const SizeStyle=Quill.import('attributors/style/size');
+    SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
+    Quill.register(SizeStyle,true);
+  }catch(e){console.warn(e);}
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
