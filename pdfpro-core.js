@@ -2319,25 +2319,14 @@ function doNote(){
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
   const ar=_lang==='ar';
-  const fs=document.getElementById('teFullscreen');
-  const fb=document.getElementById('teFullBody');
-  if(!fs||!fb)return;
-  const titleEl=document.getElementById('teFullTitle');
-  if(titleEl)titleEl.textContent=ar?'محرر النصوص':'Text Editor';
-  fs.style.display='flex';
+  // حول الـ sheet لشاشة كاملة
+  const sheet=document.getElementById('sheet');
+  const overlay=document.getElementById('overlay');
+  if(sheet){sheet.style.cssText='height:100vh;border-radius:0;max-height:100vh;';}
+  if(overlay){overlay.style.cssText='background:rgba(0,0,0,0);';}
 
-  // تسجيل الخطوط في كل مرة (بدون flag) لضمان التطبيق
-  try{
-    const Font=Quill.import('formats/font');
-    Font.whitelist=['arial','times','courier','tahoma'];
-    Quill.register(Font,true);
-    const SizeStyle=Quill.import('attributors/style/size');
-    SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
-    Quill.register(SizeStyle,true);
-  }catch(e){console.warn(e);}
-
-  fb.innerHTML=`
-    <div style="background:#fff;flex:1;display:flex;flex-direction:column;">
+  document.getElementById('sheetBody').innerHTML=`
+    <div style="background:#fff;display:flex;flex-direction:column;min-height:calc(100vh - 56px);">
       <div id="teToolbar" style="position:sticky;top:0;z-index:10;">
         <span class="ql-formats">
           <select class="ql-font" title="${ar?'نوع الخط':'Font'}">
@@ -2367,15 +2356,15 @@ function buildTextEditor(){
           <select class="ql-align" title="${ar?'محاذاة':'Align'}"></select>
         </span>
         <span class="ql-formats">
-          <button class="ql-list" value="ordered" title="${ar?'قائمة مرقّمة':'Numbered'}"></button>
-          <button class="ql-list" value="bullet" title="${ar?'قائمة نقطية':'Bullets'}"></button>
+          <button class="ql-list" value="ordered" title="${ar?'مرقمة':'Numbered'}"></button>
+          <button class="ql-list" value="bullet" title="${ar?'نقطية':'Bullets'}"></button>
         </span>
         <span class="ql-formats">
           <button class="ql-image" title="${ar?'صورة':'Image'}"></button>
-          <button class="ql-clean" title="${ar?'إزالة تنسيق':'Clear'}"></button>
+          <button class="ql-clean" title="${ar?'مسح تنسيق':'Clear'}"></button>
         </span>
       </div>
-      <div id="teEditor" style="flex:1;"></div>
+      <div id="teEditor" style="flex:1;min-height:400px;"></div>
     </div>
     <div style="padding:12px;background:var(--bg);">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
@@ -2402,7 +2391,6 @@ function buildTextEditor(){
   window._teQuill.root.setAttribute('dir',ar?'rtl':'ltr');
   window._teQuill.root.style.textAlign=ar?'right':'left';
 
-  // حفظ آخر تحديد + handler مخصص للخط
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(range){if(range)window._teLastRange=range;});
   window._teQuill.getModule('toolbar').addHandler('font',function(val){
@@ -2417,10 +2405,9 @@ function buildTextEditor(){
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
 
-  // زر التحريك (المنتصف)
   const _mv=document.createElement('div');
   _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;background:rgba(229,57,53,0.85);border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;';
-  _mv.innerHTML='<svg style="margin:6px" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
+  _mv.innerHTML='<svg style="margin:7px" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
   _mv.addEventListener('pointerdown',e=>{
     const img=window._teCurImg;if(!img)return;e.preventDefault();e.stopPropagation();
     img.style.position='relative';
@@ -2431,34 +2418,30 @@ function buildTextEditor(){
   });
   _h.appendChild(_mv);
 
-  // مقابض الأطراف الأربعة والأضلاع الأربعة
   const handles=[
-    {id:'nw',css:'top:-9px;left:-9px;cursor:nwse-resize;',type:'corner'},
-    {id:'ne',css:'top:-9px;right:-9px;cursor:nesw-resize;',type:'corner'},
-    {id:'sw',css:'bottom:-9px;left:-9px;cursor:nesw-resize;',type:'corner'},
-    {id:'se',css:'bottom:-9px;right:-9px;cursor:nwse-resize;',type:'corner'},
-    {id:'n', css:'top:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;',type:'edge'},
-    {id:'s', css:'bottom:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;',type:'edge'},
-    {id:'w', css:'top:50%;left:-9px;transform:translateY(-50%);cursor:ew-resize;',type:'edge'},
-    {id:'e', css:'top:50%;right:-9px;transform:translateY(-50%);cursor:ew-resize;',type:'edge'},
+    {id:'nw',css:'top:-9px;left:-9px;cursor:nwse-resize;'},
+    {id:'ne',css:'top:-9px;right:-9px;cursor:nesw-resize;'},
+    {id:'sw',css:'bottom:-9px;left:-9px;cursor:nesw-resize;'},
+    {id:'se',css:'bottom:-9px;right:-9px;cursor:nwse-resize;'},
+    {id:'n', css:'top:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;'},
+    {id:'s', css:'bottom:-9px;left:50%;transform:translateX(-50%);cursor:ns-resize;'},
+    {id:'w', css:'top:50%;left:-9px;transform:translateY(-50%);cursor:ew-resize;'},
+    {id:'e', css:'top:50%;right:-9px;transform:translateY(-50%);cursor:ew-resize;'},
   ];
-  handles.forEach(({id,css,type})=>{
+  handles.forEach(({id,css})=>{
     const d=document.createElement('div');d.dataset.id=id;
     d.style.cssText='position:absolute;width:18px;height:18px;background:#e53935;border:2px solid #fff;border-radius:3px;pointer-events:auto;touch-action:none;'+css;
     d.addEventListener('pointerdown',e=>{
       const img=window._teCurImg;if(!img)return;e.preventDefault();e.stopPropagation();
       img.style.position='relative';
-      // اجعل height:auto عند بداية السحب لمنع التمط
       if(!img.dataset.resizing){img.style.height='auto';img.dataset.resizing='1';}
       const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
       const sl=parseInt(img.style.left)||0,st=parseInt(img.style.top)||0;
       function mv(ev){
         ev.preventDefault();
         const dx=ev.clientX-sx,dy=ev.clientY-sy;
-        // الأركان والأضلاع اليمين/اليسار: غيّر العرض فقط
         if(id==='e'||id==='se'||id==='ne'){img.style.width=Math.max(30,sw+dx)+'px';}
         else if(id==='w'||id==='sw'||id==='nw'){const nw=Math.max(30,sw-dx);img.style.width=nw+'px';img.style.left=(sl+(sw-nw))+'px';}
-        // الأضلاع العلوية والسفلية فقط: غيّر الارتفاع مع object-fit
         if(id==='s'){img.style.height=Math.max(30,sh+dy)+'px';}
         else if(id==='n'){const nh=Math.max(30,sh-dy);img.style.height=nh+'px';img.style.top=(st+(sh-nh))+'px';}
         tePositionImgH(img);
@@ -2469,13 +2452,11 @@ function buildTextEditor(){
     _h.appendChild(d);
   });
 
-  // زر الحذف
   const _del=document.createElement('div');_del.textContent='X';
   _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
   _del.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(ar?'تم الحذف':'Deleted','ok');}});
   _h.appendChild(_del);
   document.body.appendChild(_h);
-
   document.addEventListener('pointerdown',e=>{if(e.target.tagName==='IMG'||_h.contains(e.target))return;_h.style.display='none';window._teCurImg=null;});
 
   ['touchstart','touchend','touchmove','mousedown','click'].forEach(ev=>{
@@ -2488,18 +2469,22 @@ function buildTextEditor(){
 
   window.addEventListener('resize',function(){if(window._teCurImg&&_h.style.display==='block')setTimeout(()=>tePositionImgH(window._teCurImg),150);});
 
-  // تلميحات ضغط مطوّل
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
   tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
   tb.addEventListener('touchend',e=>{clearTimeout(_tmr);if(_lp){e.preventDefault();e.stopPropagation();}},{passive:false});
   tb.addEventListener('touchmove',()=>clearTimeout(_tmr),{passive:true});
 }
 function teCloseFullscreen(){
-  const fs=document.getElementById('teFullscreen');
-  if(fs)fs.style.display='none';
+  // أعد الـ sheet لحجمها الطبيعي عند الإغلاق
+  const sheet=document.getElementById('sheet');
+  const overlay=document.getElementById('overlay');
+  if(sheet)sheet.style.cssText='';
+  if(overlay)overlay.style.cssText='';
+  closeSheet();
   window._teQuill=null;
   const _h=document.getElementById('teImgH');if(_h)_h.remove();
 }
+
 function tePositionImgH(img){var _h=document.getElementById("teImgH");if(!_h||!img)return;var r=img.getBoundingClientRect();_h.style.left=r.left+"px";_h.style.top=r.top+"px";_h.style.width=r.width+"px";_h.style.height=r.height+"px";}
 
 function tePrint(){
