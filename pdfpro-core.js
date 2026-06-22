@@ -2437,20 +2437,39 @@ function buildTextEditor(){
   });
   _h.appendChild(_mv);
 
-  // مقابض الحجم — فقط الزاويتين الأيسر والأيمن من الأسفل (الأكثر طبيعية)
-  [{c:'sw',css:'bottom:-10px;left:-10px;cursor:nesw-resize;'},
+  // مقابض الحجم — الأطراف الأربعة
+  [{c:'nw',css:'top:-10px;left:-10px;cursor:nwse-resize;'},
+   {c:'ne',css:'top:-10px;right:-10px;cursor:nesw-resize;'},
+   {c:'sw',css:'bottom:-10px;left:-10px;cursor:nesw-resize;'},
    {c:'se',css:'bottom:-10px;right:-10px;cursor:nwse-resize;'}].forEach(({c,css})=>{
     const d=document.createElement('div');d.dataset.c=c;
     d.style.cssText='position:absolute;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;'+css;
     d.addEventListener('pointerdown',e=>{
       const img=window._teCurImg;if(!img)return;
       e.preventDefault();e.stopPropagation();
-      const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
+      img.style.position='relative';
+      const sx=e.clientX,sy=e.clientY;
+      const sw=img.offsetWidth,sh=img.offsetHeight;
+      const sl=parseInt(img.style.left)||0,st=parseInt(img.style.top)||0;
       function mv(ev){
         ev.preventDefault();
         const dx=ev.clientX-sx,dy=ev.clientY-sy;
-        img.style.width=Math.max(30,c==='sw'?sw-dx:sw+dx)+'px';
-        img.style.height=Math.max(30,sh+dy)+'px';
+        // العرض
+        if(c==='nw'||c==='sw'){
+          const nw=Math.max(30,sw-dx);
+          img.style.width=nw+'px';
+          img.style.left=(sl+(sw-nw))+'px';
+        }else{
+          img.style.width=Math.max(30,sw+dx)+'px';
+        }
+        // الارتفاع
+        if(c==='nw'||c==='ne'){
+          const nh=Math.max(30,sh-dy);
+          img.style.height=nh+'px';
+          img.style.top=(st+(sh-nh))+'px';
+        }else{
+          img.style.height=Math.max(30,sh+dy)+'px';
+        }
         tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
