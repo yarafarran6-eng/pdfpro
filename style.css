@@ -194,17 +194,17 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .toast.ok{border-color:#1a4d1a;}.toast.err{border-color:var(--red);}
 
 /* ── محرر النصوص (Text Editor) ───────────────── */
-#teCard .ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
-#teCard{background:#fff;min-height:420px;position:relative;}
-#teCard .ql-container.ql-snow{border:none;}
-#teCard .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
-#teCard .ql-editor img{max-width:100%;}
+#teToolbar.ql-toolbar.ql-snow{background:#f3f3f3;border:none;border-bottom:1px solid #ddd;padding:8px;}
+#tePage{background:#fff;min-height:420px;position:relative;}
+#tePage .ql-container.ql-snow{border:none;}
+#tePage .ql-editor{min-height:420px;padding:24px;font-size:14px;color:#1a1a1a;line-height:1.7;}
+#tePage .ql-editor img{max-width:100%;}
 .te-corner{position:absolute;width:18px;height:18px;background:#e53935;border:2px solid #fff;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.5);touch-action:none;z-index:2;cursor:nwse-resize;}
 .te-c-nw{top:-9px;left:-9px;cursor:nwse-resize;}
 .te-c-ne{top:-9px;right:-9px;cursor:nesw-resize;}
 .te-c-sw{bottom:-9px;left:-9px;cursor:nesw-resize;}
 .te-c-se{bottom:-9px;right:-9px;cursor:nwse-resize;}
-#teCard .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
+#tePage .ql-editor.ql-blank::before{font-family:inherit;color:#999;font-style:normal;}
 .ql-font-Arial,.ql-picker.ql-font .ql-picker-item[data-value="Arial"]{font-family:Arial,sans-serif;}
 .ql-font-Tahoma,.ql-picker.ql-font .ql-picker-item[data-value="Tahoma"]{font-family:Tahoma,sans-serif;}
 .ql-font-Courier-New,.ql-picker.ql-font .ql-picker-item[data-value="Courier New"]{font-family:'Courier New',monospace;}
