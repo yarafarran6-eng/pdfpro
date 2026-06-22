@@ -2374,19 +2374,74 @@ function buildTextEditor(){
 
   if(!window._teFontReg){
     try{
-      const Font=Quill.import('formats/font');
-      Font.whitelist=['arial','times','courier','tahoma'];
-      Quill.register(Font,true);
-      const Size=Quill.import('formats/size');
-      Size.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
-      Quill.register(Size,true);
-    }catch(e){}
+      // style attributors تطبّق font-family/font-size كـ inline style مباشرة
+      const FontStyle=Quill.import('attributors/style/font');
+      FontStyle.whitelist=['arial','times new roman','courier new','tahoma'];
+      Quill.register(FontStyle,true);
+      const SizeStyle=Quill.import('attributors/style/size');
+      SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
+      Quill.register(SizeStyle,true);
+    }catch(e){console.warn(e);}
     window._teFontReg=true;
   }
-
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
+
+  // مقابض تغيير حجم الصورة
+  let _h=document.getElementById('teImgH');if(_h)_h.remove();
+  _h=document.createElement('div');_h.id='teImgH';
+  _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
+  ['nw','ne','sw','se'].forEach(c=>{
+    const d=document.createElement('div');d.dataset.c=c;
+    d.style.cssText='position:absolute;width:20px;height:20px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;';
+    if(c==='nw')d.style.cssText+='top:-10px;left:-10px;cursor:nwse-resize;';
+    if(c==='ne')d.style.cssText+='top:-10px;right:-10px;cursor:nesw-resize;';
+    if(c==='sw')d.style.cssText+='bottom:-10px;left:-10px;cursor:nesw-resize;';
+    if(c==='se')d.style.cssText+='bottom:-10px;right:-10px;cursor:nwse-resize;';
+    d.addEventListener('pointerdown',e=>{
+      const img=window._teCurImg;if(!img)return;
+      e.preventDefault();e.stopPropagation();
+      const sx=e.clientX,sy=e.clientY,sw=img.offsetWidth,sh=img.offsetHeight;
+      function mv(ev){
+        ev.preventDefault();
+        const dx=ev.clientX-sx,dy=ev.clientY-sy;
+        img.style.width=Math.max(30,c==='nw'||c==='sw'?sw-dx:sw+dx)+'px';
+        img.style.height=Math.max(30,c==='nw'||c==='ne'?sh-dy:sh+dy)+'px';
+        const r=img.getBoundingClientRect();
+        _h.style.left=r.left+'px';_h.style.top=r.top+'px';_h.style.width=r.width+'px';_h.style.height=r.height+'px';
+      }
+      function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+      document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+    });
+    _h.appendChild(d);
+  });
+  const _del=document.createElement('div');_del.textContent='X';
+  _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
+  _del.addEventListener('pointerdown',e=>{
+    e.stopPropagation();e.preventDefault();
+    if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(_lang==='ar'?'تم الحذف':'Deleted','ok');}
+  });
+  _h.appendChild(_del);
+  document.body.appendChild(_h);
+  document.addEventListener('pointerdown',e=>{
+    if(e.target.tagName==='IMG'||_h.contains(e.target))return;
+    _h.style.display='none';window._teCurImg=null;
+  });
+
+  // اكتشاف الصورة عبر selection-change (الأموثوق على Android)
+  window._teQuill.on('selection-change',function(range){
+    if(!range){_h.style.display='none';window._teCurImg=null;return;}
+    try{
+      const[leaf]=window._teQuill.getLeaf(range.index);
+      if(leaf&&leaf.domNode&&leaf.domNode.tagName==='IMG'){
+        const img=leaf.domNode;window._teCurImg=img;
+        const r=img.getBoundingClientRect();
+        _h.style.left=r.left+'px';_h.style.top=r.top+'px';_h.style.width=r.width+'px';_h.style.height=r.height+'px';
+        _h.style.display='block';
+      }else{_h.style.display='none';window._teCurImg=null;}
+    }catch(e){_h.style.display='none';window._teCurImg=null;}
+  });
 
   // تلميحات عند الضغط المطوّل
   const tb=document.getElementById('teToolbar');
