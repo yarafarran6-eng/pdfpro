@@ -219,3 +219,16 @@ body.light{--bg:#f5f5f5;--surface:#fff;--card:#f0f0f0;--card2:#e8e8e8;--border:#
 .ql-picker.ql-size .ql-picker-label::before{content:'حجم';}
 .ql-picker.ql-size .ql-picker-label[data-value]::before{content:attr(data-value);}
 .ql-picker.ql-size .ql-picker-item[data-value]::before{content:attr(data-value);}
+
+/* خطوط وأحجام محرر النصوص */
+.ql-font-arial,.ql-picker.ql-font .ql-picker-item[data-value=arial]::before,.ql-picker.ql-font .ql-picker-label[data-value=arial]::before{font-family:Arial,sans-serif;content:'Arial';}
+.ql-font-tahoma,.ql-picker.ql-font .ql-picker-item[data-value=tahoma]::before,.ql-picker.ql-font .ql-picker-label[data-value=tahoma]::before{font-family:Tahoma,sans-serif;content:'Tahoma';}
+.ql-font-courier-new,.ql-picker.ql-font .ql-picker-item[data-value="courier new"]::before,.ql-picker.ql-font .ql-picker-label[data-value="courier new"]::before{font-family:'Courier New',monospace;content:'Courier New';}
+.ql-font-times-new-roman,.ql-picker.ql-font .ql-picker-item[data-value="times new roman"]::before,.ql-picker.ql-font .ql-picker-label[data-value="times new roman"]::before{font-family:'Times New Roman',serif;content:'Times NR';}
+.ql-picker.ql-size .ql-picker-item[data-value="12px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="12px"]::before{content:'12';}
+.ql-picker.ql-size .ql-picker-item[data-value="14px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="14px"]::before{content:'14';}
+.ql-picker.ql-size .ql-picker-item[data-value="16px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="16px"]::before{content:'16';}
+.ql-picker.ql-size .ql-picker-item[data-value="18px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="18px"]::before{content:'18';}
+.ql-picker.ql-size .ql-picker-item[data-value="24px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="24px"]::before{content:'24';}
+.ql-picker.ql-size .ql-picker-item[data-value="32px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="32px"]::before{content:'32';}
+.ql-picker.ql-size .ql-picker-item[data-value="48px"]::before,.ql-picker.ql-size .ql-picker-label[data-value="48px"]::before{content:'48';}
