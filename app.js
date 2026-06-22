@@ -2325,7 +2325,7 @@ function buildTextEditor(){
     </div>
     <div id="teSizeRow" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding:8px;background:var(--card);border-radius:10px;border:1px solid var(--border)">
       <span style="font-size:11px;color:var(--text2);align-self:center;margin-${_lang==='ar'?'left':'right'}:4px">${_lang==='ar'?'الحجم:':'Size:'}</span>
-      ${[10,12,14,16,18,20,24,28,32,40,48].map(s=>`<button onclick="teApplySize('${s}px')" style="padding:4px 8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;min-width:34px">${s}</button>`).join('')}
+      ${[10,12,14,16,18,20,24,28,32,40,48].map(s=>`<button data-size="${s}px" style="padding:4px 8px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;min-width:34px">${s}</button>`).join('')}
     </div>
     <p style="font-size:11px;color:var(--text3);margin:0 0 12px">${_lang==='ar'?'اضغط على أي صورة لتظهر مقابض التحجيم بزواياها — اسحب أي زاوية لتغيير الحجم، أو اضغط × لحذفها.':'Tap any image to show resize handles at its corners — drag to resize, or tap × to delete.'}</p>
     <div class="field"><label>${_lang==='ar'?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${_lang==='ar'?'مستند جديد':'New Document'}"></div>
@@ -2369,25 +2369,47 @@ function buildTextEditor(){
   });
   window._teQuill.root.setAttribute('dir',_lang==='ar'?'rtl':'ltr');
   window._teQuill.root.style.textAlign=_lang==='ar'?'right':'left';
+
+  // ربط أزرار الحجم — preventDefault يمنع فقدان التركيز على الجوال
+  document.querySelectorAll('#teSizeRow button[data-size]').forEach(btn=>{
+    btn.addEventListener('touchstart',e=>{
+      e.preventDefault(); // الأهم: يمنع نقل التركيز من المحرر
+      window._teSavedRange=window._teQuill.getSelection();
+    },{passive:false});
+    btn.addEventListener('touchend',e=>{
+      e.preventDefault();
+      teApplySize(btn.dataset.size,btn);
+    },{passive:false});
+    btn.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      window._teSavedRange=window._teQuill.getSelection();
+    });
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      teApplySize(btn.dataset.size,btn);
+    });
+  });
+
   teToolbarTooltips();
   teSetupImageControls();
 }
-// تطبيق حجم الخط مباشرة بشكل مضمون
-function teApplySize(px){
+function teApplySize(px,btn){
   const q=window._teQuill;if(!q)return;
-  // إعادة التركيز على المحرر أولاً
-  q.focus();
-  const range=q.getSelection(true);
+  const range=window._teSavedRange||q.getSelection();
   if(range&&range.length>0){
-    q.formatText(range.index,range.length,'size',px,Quill.sources.USER);
+    q.formatText(range.index,range.length,'size',px);
   }else{
-    q.format('size',px,Quill.sources.USER);
+    if(range)q.setSelection(range.index,0);
+    q.format('size',px);
   }
   // تمييز الزر المختار
-  document.querySelectorAll('#teSizeRow button').forEach(b=>{
-    b.style.background=b.textContent.trim()===px.replace('px','')?'var(--red)':'var(--card2)';
-    b.style.color=b.textContent.trim()===px.replace('px','')?'white':'var(--text)';
+  document.querySelectorAll('#teSizeRow button[data-size]').forEach(b=>{
+    const active=b===btn||b.dataset.size===px;
+    b.style.background=active?'#e53935':'var(--card2)';
+    b.style.color=active?'white':'var(--text)';
+    b.style.borderColor=active?'#e53935':'var(--border)';
   });
+  window._teSavedRange=null;
 }
 function teToolbarTooltips(){
   const tb=document.querySelector('#teCard .ql-toolbar');if(!tb)return;
