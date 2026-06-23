@@ -2358,18 +2358,18 @@ function buildTextEditor(){
           <button class="ql-clean" title="${ar?'مسح':'Clear'}"></button>
         </span>
       </div>
-      <div id="teFontRow" style="flex-shrink:0;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 8px;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
-        <button class="te-fbtn" data-f="" title="${ar?'الخط الافتراضي للنظام':'System default'}" style="font-family:inherit;">${ar?'<span style="font-family:inherit">مرحبا Hello</span>':'<span>Default</span>'}</button>
-        <button class="te-fbtn" data-f="Amiri" title="${ar?'أميري — خط عربي كلاسيكي':'Amiri — Arabic calligraphy'}" style="font-family:Amiri,serif;">${ar?'<span style="font-family:Amiri,serif">مرحبا Hello</span>':'<span style="font-family:Amiri,serif">Amiri</span>'}</button>
-        <button class="te-fbtn" data-f="Scheherazade New" title="${ar?'شهرزاد — خط عربي تقليدي':'Scheherazade'}" style="font-family:'Scheherazade New',serif;">${ar?'<span style="font-family:\'Scheherazade New\',serif">مرحبا Hello</span>':'<span style="font-family:\'Scheherazade New\',serif">Scheherazade</span>'}</button>
-        <button class="te-fbtn" data-f="Cairo" title="${ar?'القاهرة — خط عربي عصري':'Cairo — Modern Arabic'}" style="font-family:Cairo,sans-serif;">${ar?'<span style="font-family:Cairo,sans-serif">مرحبا Hello</span>':'<span style="font-family:Cairo,sans-serif">Cairo</span>'}</button>
-        <button class="te-fbtn" data-f="Tajawal" title="${ar?'تجوال — خط عربي بسيط':'Tajawal'}" style="font-family:Tajawal,sans-serif;">${ar?'<span style="font-family:Tajawal,sans-serif">مرحبا Hello</span>':'<span style="font-family:Tajawal,sans-serif">Tajawal</span>'}</button>
-        <button class="te-fbtn" data-f="Georgia, serif" title="Georgia" style="font-family:Georgia,serif;"><span style="font-family:Georgia,serif">Hello مرحبا</span></button>
-        <button class="te-fbtn" data-f="'Courier New', monospace" title="Courier New" style="font-family:'Courier New',monospace;"><span style="font-family:'Courier New',monospace">Hello مرحبا</span></button>
-        <button class="te-fbtn" data-f="Arial, sans-serif" title="Arial" style="font-family:Arial,sans-serif;"><span style="font-family:Arial,sans-serif">Hello مرحبا</span></button>
+      <div style="flex-shrink:0;padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;">
+        <select id="teFontSel" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;padding:0 6px;">
+          <option value="">${ar?'الخط — اختر':'Font — select'}</option>
+          <option value="Amiri">${ar?'أميري (خط عربي كلاسيكي)':'Amiri'}</option>
+          <option value="Scheherazade New">${ar?'شهرزاد (خط عربي تقليدي)':'Scheherazade'}</option>
+          <option value="Cairo">${ar?'القاهرة (خط عربي عصري)':'Cairo'}</option>
+          <option value="Tajawal">${ar?'تجوال (خط عربي بسيط)':'Tajawal'}</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Arial">Arial</option>
+        </select>
       </div>
-      <div id="teEditor" style="flex:1;overflow-y:auto;"></div>
-    </div>
     <div style="padding:10px;background:var(--bg);flex-shrink:0;">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
@@ -2417,8 +2417,6 @@ function buildTextEditor(){
     });
   }
 
-  const DEAD_CODE_REMOVE=()=>{
-  };
 
   // مقابض الصورة — ٤ أضلاع فقط
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
@@ -2437,19 +2435,19 @@ function buildTextEditor(){
     d.addEventListener('pointerdown',ev=>{
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
-      // الحد الأقصى للعرض هو عرض المحرر
-      const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:400;
+      const editorEl=window._teQuill?window._teQuill.root:null;
+      const maxW=editorEl?editorEl.offsetWidth-8:window.innerWidth-20;
+      const maxH=editorEl?editorEl.offsetHeight-8:2000;
       const sx=ev.clientX,sy=ev.clientY;
       const sw=img.offsetWidth,sh2=img.offsetHeight;
       function mv(e2){
         e2.preventDefault();
         const dx=e2.clientX-sx,dy=e2.clientY-sy;
-        // كل ضلع يغيّر بُعده فقط — بدون تغيير position
         if(id==='e')img.style.width=Math.min(maxW,Math.max(30,sw+dx))+'px';
-        if(id==='w')img.style.width=Math.max(30,sw-dx)+'px';
-        if(id==='s')img.style.height=Math.max(30,sh2+dy)+'px';
-        if(id==='n')img.style.height=Math.max(30,sh2-dy)+'px';
-        requestAnimationFrame(()=>tePositionImgH(img));
+        if(id==='w')img.style.width=Math.min(maxW,Math.max(30,sw-dx))+'px';
+        if(id==='s')img.style.height=Math.min(maxH,Math.max(30,sh2+dy))+'px';
+        if(id==='n')img.style.height=Math.min(maxH,Math.max(30,sh2-dy))+'px';
+        tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
       document.addEventListener('pointermove',mv,{passive:false});
