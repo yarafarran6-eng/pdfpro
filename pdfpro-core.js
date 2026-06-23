@@ -2397,65 +2397,28 @@ function buildTextEditor(){
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(r){if(r)window._teLastRange=r;});
 
-  // أزرار الخط — تطبيق مباشر على DOM بدون Quill API
-  document.querySelectorAll('.te-fbtn').forEach(btn=>{
-    btn.style.cssText+='padding:4px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;font-size:11px;flex-shrink:0;line-height:1.3;';
-    const applyFont=()=>{
-      const fontFamily=btn.dataset.f;
+  // قائمة الخطوط — select منسدلة
+  const fontSel=document.getElementById('teFontSel');
+  if(fontSel){
+    fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
+    fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
+    fontSel.addEventListener('change',()=>{
+      const fv=fontSel.value;
       const q=window._teQuill;if(!q)return;
-      const sel=window.getSelection();
-      if(sel&&sel.rangeCount>0&&!sel.getRangeAt(0).collapsed){
-        // نص محدد — غلّفه بـ span مع font-family
-        const range=sel.getRangeAt(0).cloneRange();
-        const span=document.createElement('span');
-        if(fontFamily)span.style.fontFamily=fontFamily;
-        try{
-          const frag=range.extractContents();
-          span.appendChild(frag);
-          range.insertNode(span);
-          // ضع المؤشر بعد الـ span
-          const nr=document.createRange();
-          nr.setStartAfter(span);nr.collapse(true);
-          sel.removeAllRanges();sel.addRange(nr);
-        }catch(e){console.warn('font apply:',e);}
-      }else{
-        // بدون تحديد — أدخل span فارغ وضع المؤشر داخله للكتابة
-        q.root.focus();
-        const r2=window._teLastRange;
-        if(r2){
-          const nSel=window.getSelection();
-          const nRange=document.createRange();
-          // أنشئ span marker
-          const marker=document.createElement('span');
-          if(fontFamily)marker.style.fontFamily=fontFamily;
-          marker.innerHTML='\u200B';
-          // أدرجه عند موضع المؤشر
-          try{
-            q.insertEmbed(r2.index,'formula','');
-          }catch(e){}
-          // طريقة بديلة: أدرجه مباشرة
-          const walker=document.createTreeWalker(q.root,NodeFilter.SHOW_TEXT);
-          let curIdx=0,node,targetNode=null,offset=0;
-          while(node=walker.nextNode()){
-            if(curIdx+node.length>=r2.index){targetNode=node;offset=r2.index-curIdx;break;}
-            curIdx+=node.length;
-          }
-          if(targetNode){
-            const p=targetNode.parentNode;
-            const after=targetNode.splitText(offset);
-            p.insertBefore(marker,after);
-            const mr=document.createRange();
-            mr.setStart(marker.firstChild,1);mr.collapse(true);
-            nSel.removeAllRanges();nSel.addRange(mr);
-          }
-        }
-      }
-      document.querySelectorAll('.te-fbtn').forEach(b=>{b.style.background=b===btn?'#e53935':'#fff';b.style.color=b===btn?'#fff':'#333';b.style.borderColor=b===btn?'#e53935':'#ccc';});
-    };
-    btn.addEventListener('touchstart',e=>{e.preventDefault();window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:false});
-    btn.addEventListener('touchend',e=>{e.preventDefault();applyFont();},{passive:false});
-    btn.addEventListener('click',applyFont);
-  });
+      const range=window._teLastRange||q.getSelection();if(!range)return;
+      q.root.focus();
+      try{
+        q.setSelection(range.index,range.length);
+        if(range.length>0){q.formatText(range.index,range.length,'font',fv||false,Quill.sources.USER);}
+        else{q.format('font',fv||false,Quill.sources.USER);}
+      }catch(e){console.warn('font:',e);}
+      window._teLastRange=null;
+      setTimeout(()=>{fontSel.value='';},300);
+    });
+  }
+
+  const DEAD_CODE_REMOVE=()=>{
+  };
 
   // مقابض الصورة — ٤ أضلاع فقط
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
@@ -2474,18 +2437,18 @@ function buildTextEditor(){
     d.addEventListener('pointerdown',ev=>{
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
-      // تأكد أن height معينة قبل التغيير
-      if(img.style.height==='auto'||!img.style.height){img.style.height=img.offsetHeight+'px';}
-      const sx=ev.clientX,sy=ev.clientY,sw=img.offsetWidth,sh2=img.offsetHeight;
-      const sl=parseInt(img.style.left)||0,st2=parseInt(img.style.top)||0;
-      img.style.position='relative';
+      // الحد الأقصى للعرض هو عرض المحرر
+      const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:400;
+      const sx=ev.clientX,sy=ev.clientY;
+      const sw=img.offsetWidth,sh2=img.offsetHeight;
       function mv(e2){
         e2.preventDefault();
         const dx=e2.clientX-sx,dy=e2.clientY-sy;
-        if(id==='e')img.style.width=Math.max(30,sw+dx)+'px';
-        if(id==='w'){const nw=Math.max(30,sw-dx);img.style.width=nw+'px';img.style.left=(sl+sw-nw)+'px';}
+        // كل ضلع يغيّر بُعده فقط — بدون تغيير position
+        if(id==='e')img.style.width=Math.min(maxW,Math.max(30,sw+dx))+'px';
+        if(id==='w')img.style.width=Math.max(30,sw-dx)+'px';
         if(id==='s')img.style.height=Math.max(30,sh2+dy)+'px';
-        if(id==='n'){const nh=Math.max(30,sh2-dy);img.style.height=nh+'px';img.style.top=(st2+sh2-nh)+'px';}
+        if(id==='n')img.style.height=Math.max(30,sh2-dy)+'px';
         requestAnimationFrame(()=>tePositionImgH(img));
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
