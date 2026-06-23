@@ -2358,13 +2358,15 @@ function buildTextEditor(){
           <button class="ql-clean" title="${ar?'مسح':'Clear'}"></button>
         </span>
       </div>
-      <div id="teFontRow" style="flex-shrink:0;background:#f5f5f5;border-bottom:1px solid #ddd;padding:4px 8px;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;">
-        <button class="te-fbtn" data-f="" style="font-family:inherit;" title="${ar?'افتراضي':'Default'}">${ar?'افتراضي':'Default'}</button>
-        <button class="te-fbtn" data-f="Arial" style="font-family:Arial;">Arial</button>
-        <button class="te-fbtn" data-f="Tahoma" style="font-family:Tahoma;">Tahoma</button>
-        <button class="te-fbtn" data-f="Courier New" style="font-family:'Courier New';">Courier</button>
-        <button class="te-fbtn" data-f="Times New Roman" style="font-family:'Times New Roman';">Times NR</button>
-        <button class="te-fbtn" data-f="Georgia" style="font-family:Georgia;">Georgia</button>
+      <div id="teFontRow" style="flex-shrink:0;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 8px;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;">
+        <button class="te-fbtn" data-f="" title="${ar?'الخط الافتراضي للنظام':'System default'}" style="font-family:inherit;">${ar?'<span style="font-family:inherit">مرحبا Hello</span>':'<span>Default</span>'}</button>
+        <button class="te-fbtn" data-f="Amiri" title="${ar?'أميري — خط عربي كلاسيكي':'Amiri — Arabic calligraphy'}" style="font-family:Amiri,serif;">${ar?'<span style="font-family:Amiri,serif">مرحبا Hello</span>':'<span style="font-family:Amiri,serif">Amiri</span>'}</button>
+        <button class="te-fbtn" data-f="Scheherazade New" title="${ar?'شهرزاد — خط عربي تقليدي':'Scheherazade'}" style="font-family:'Scheherazade New',serif;">${ar?'<span style="font-family:\'Scheherazade New\',serif">مرحبا Hello</span>':'<span style="font-family:\'Scheherazade New\',serif">Scheherazade</span>'}</button>
+        <button class="te-fbtn" data-f="Cairo" title="${ar?'القاهرة — خط عربي عصري':'Cairo — Modern Arabic'}" style="font-family:Cairo,sans-serif;">${ar?'<span style="font-family:Cairo,sans-serif">مرحبا Hello</span>':'<span style="font-family:Cairo,sans-serif">Cairo</span>'}</button>
+        <button class="te-fbtn" data-f="Tajawal" title="${ar?'تجوال — خط عربي بسيط':'Tajawal'}" style="font-family:Tajawal,sans-serif;">${ar?'<span style="font-family:Tajawal,sans-serif">مرحبا Hello</span>':'<span style="font-family:Tajawal,sans-serif">Tajawal</span>'}</button>
+        <button class="te-fbtn" data-f="Georgia, serif" title="Georgia" style="font-family:Georgia,serif;"><span style="font-family:Georgia,serif">Hello مرحبا</span></button>
+        <button class="te-fbtn" data-f="'Courier New', monospace" title="Courier New" style="font-family:'Courier New',monospace;"><span style="font-family:'Courier New',monospace">Hello مرحبا</span></button>
+        <button class="te-fbtn" data-f="Arial, sans-serif" title="Arial" style="font-family:Arial,sans-serif;"><span style="font-family:Arial,sans-serif">Hello مرحبا</span></button>
       </div>
       <div id="teEditor" style="flex:1;overflow-y:auto;"></div>
     </div>
@@ -2395,29 +2397,64 @@ function buildTextEditor(){
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(r){if(r)window._teLastRange=r;});
 
-  // أزرار الخط
+  // أزرار الخط — تطبيق مباشر على DOM بدون Quill API
   document.querySelectorAll('.te-fbtn').forEach(btn=>{
-    btn.style.cssText+='padding:3px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;font-size:12px;flex-shrink:0;';
-    btn.addEventListener('touchstart',e=>{e.preventDefault();window._teLastRange=window._teLastRange||window._teQuill.getSelection();},{passive:false});
-    btn.addEventListener('touchend',e=>{
-      e.preventDefault();
-      const fv=btn.dataset.f;
-      const range=window._teQuill.getSelection()||window._teLastRange;
-      if(range&&range.length>0){
-        if(fv)window._teQuill.formatText(range.index,range.length,'font',fv);
-        else window._teQuill.formatText(range.index,range.length,'font',false);
+    btn.style.cssText+='padding:4px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;font-size:11px;flex-shrink:0;line-height:1.3;';
+    const applyFont=()=>{
+      const fontFamily=btn.dataset.f;
+      const q=window._teQuill;if(!q)return;
+      const sel=window.getSelection();
+      if(sel&&sel.rangeCount>0&&!sel.getRangeAt(0).collapsed){
+        // نص محدد — غلّفه بـ span مع font-family
+        const range=sel.getRangeAt(0).cloneRange();
+        const span=document.createElement('span');
+        if(fontFamily)span.style.fontFamily=fontFamily;
+        try{
+          const frag=range.extractContents();
+          span.appendChild(frag);
+          range.insertNode(span);
+          // ضع المؤشر بعد الـ span
+          const nr=document.createRange();
+          nr.setStartAfter(span);nr.collapse(true);
+          sel.removeAllRanges();sel.addRange(nr);
+        }catch(e){console.warn('font apply:',e);}
       }else{
-        window._teQuill.format('font',fv||false);
+        // بدون تحديد — أدخل span فارغ وضع المؤشر داخله للكتابة
+        q.root.focus();
+        const r2=window._teLastRange;
+        if(r2){
+          const nSel=window.getSelection();
+          const nRange=document.createRange();
+          // أنشئ span marker
+          const marker=document.createElement('span');
+          if(fontFamily)marker.style.fontFamily=fontFamily;
+          marker.innerHTML='\u200B';
+          // أدرجه عند موضع المؤشر
+          try{
+            q.insertEmbed(r2.index,'formula','');
+          }catch(e){}
+          // طريقة بديلة: أدرجه مباشرة
+          const walker=document.createTreeWalker(q.root,NodeFilter.SHOW_TEXT);
+          let curIdx=0,node,targetNode=null,offset=0;
+          while(node=walker.nextNode()){
+            if(curIdx+node.length>=r2.index){targetNode=node;offset=r2.index-curIdx;break;}
+            curIdx+=node.length;
+          }
+          if(targetNode){
+            const p=targetNode.parentNode;
+            const after=targetNode.splitText(offset);
+            p.insertBefore(marker,after);
+            const mr=document.createRange();
+            mr.setStart(marker.firstChild,1);mr.collapse(true);
+            nSel.removeAllRanges();nSel.addRange(mr);
+          }
+        }
       }
-      document.querySelectorAll('.te-fbtn').forEach(b=>{b.style.background=b===btn?'#e53935':'#fff';b.style.color=b===btn?'#fff':'#333';});
-    },{passive:false});
-    btn.addEventListener('click',()=>{
-      const fv=btn.dataset.f;
-      const range=window._teQuill.getSelection()||window._teLastRange;
-      if(range&&range.length>0){if(fv)window._teQuill.formatText(range.index,range.length,'font',fv);else window._teQuill.formatText(range.index,range.length,'font',false);}
-      else{window._teQuill.format('font',fv||false);}
-      document.querySelectorAll('.te-fbtn').forEach(b=>{b.style.background=b===btn?'#e53935':'#fff';b.style.color=b===btn?'#fff':'#333';});
-    });
+      document.querySelectorAll('.te-fbtn').forEach(b=>{b.style.background=b===btn?'#e53935':'#fff';b.style.color=b===btn?'#fff':'#333';b.style.borderColor=b===btn?'#e53935':'#ccc';});
+    };
+    btn.addEventListener('touchstart',e=>{e.preventDefault();window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:false});
+    btn.addEventListener('touchend',e=>{e.preventDefault();applyFont();},{passive:false});
+    btn.addEventListener('click',applyFont);
   });
 
   // مقابض الصورة — ٤ أضلاع فقط
