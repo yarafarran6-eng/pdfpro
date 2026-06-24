@@ -2327,7 +2327,7 @@ function buildTextEditor(){
   document.getElementById('sheetBody').innerHTML=`
     <div style="flex-shrink:0;background:#f3f3f3;border-bottom:1px solid #ddd;">
       <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;">
-        <span style="font-size:10px;color:#666;">${ar?'الخط:':'Font:'}</span>
+        <span style="font-size:10px;color:#666;white-space:nowrap">${ar?'الخط:':'Font:'}</span>
         <select id="teFontSel" style="flex:1;height:26px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:12px;padding:0 4px;color:#333;">
           <option value="">${ar?'اختر الخط':'Select font'}</option>
           <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
@@ -2398,47 +2398,54 @@ function buildTextEditor(){
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
     fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
     fontSel.addEventListener('change',function(){
-      const fv=this.value;const q=window._teQuill;if(!q)return;
-      const range=window._teLastRange||q.getSelection();if(!range)return;
+      const fv=this.value;if(!fv){this.value='';return;}
+      const q=window._teQuill;if(!q){this.value='';return;}
       q.root.focus();
-      try{q.setSelection(range.index,range.length);if(range.length>0){q.formatText(range.index,range.length,'font',fv||false,Quill.sources.USER);}else{q.format('font',fv||false,Quill.sources.USER);}}catch(e){}
-      window._teLastRange=null;setTimeout(()=>{this.value='';},300);
+      const range=window._teLastRange||q.getSelection();
+      try{
+        if(range&&range.length>0){q.formatText(range.index,range.length,'font',fv,Quill.sources.USER);}
+        else{const idx=range?range.index:q.getLength()-1;q.setSelection(idx,0);q.format('font',fv,Quill.sources.USER);}
+      }catch(e){console.warn(e);}
+      window._teLastRange=null;setTimeout(()=>{this.value='';},200);
     });
   }
 
+  // مقابض الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
-  [{id:'s',s:'bottom:-9px;left:calc(50% - 9px);cursor:ns-resize;'},
-   {id:'w',s:'left:-9px;top:calc(50% - 9px);cursor:ew-resize;'},
-   {id:'e',s:'right:-9px;top:calc(50% - 9px);cursor:ew-resize;'}].forEach(({id,s})=>{
-    const d=document.createElement('div');
-    d.style.cssText='position:absolute;width:18px;height:18px;background:#e53935;border:2px solid #fff;border-radius:3px;pointer-events:auto;touch-action:none;'+s;
-    d.addEventListener('pointerdown',ev=>{
-      const img=window._teCurImg;if(!img)return;
-      ev.preventDefault();ev.stopPropagation();
-      const sw=img.offsetWidth,sh2=img.offsetHeight;
-      img.style.width=sw+'px';
-      // ثبّت الارتفاع فقط عند سحب الأعلى أو الأسفل
-      if(id==='n'||id==='s'){img.style.height=sh2+'px';}
-      else{img.style.height='';}
-      const sx=ev.clientX,sy=ev.clientY;
-      const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:window.innerWidth;
-      function mv(e2){
-        e2.preventDefault();
-        const dx=e2.clientX-sx,dy=e2.clientY-sy;
-        if(id==='e')img.style.width=Math.min(maxW,Math.max(30,sw+dx))+'px';
-        if(id==='w')img.style.width=Math.min(maxW,Math.max(30,sw-dx))+'px';
-        if(id==='s')img.style.height=Math.max(30,sh2+dy)+'px';
-        if(id==='n')img.style.height=Math.max(30,sh2-dy)+'px';
-        tePositionImgH(img);
-      }
-      function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
-      document.addEventListener('pointermove',mv,{passive:false});
-      document.addEventListener('pointerup',up);
-    });
-    _h.appendChild(d);
+
+  // مقبض أسفل-يمين: يغير العرض (الارتفاع يتبع تلقائياً)
+  const _se=document.createElement('div');
+  _se.style.cssText='position:absolute;bottom:-10px;right:-10px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;cursor:nwse-resize;';
+  _se.addEventListener('pointerdown',ev=>{
+    const img=window._teCurImg;if(!img)return;
+    ev.preventDefault();ev.stopPropagation();
+    const sw=img.offsetWidth;
+    img.style.width=sw+'px';img.style.height='';
+    const sx=ev.clientX;
+    function mv(e2){e2.preventDefault();img.style.width=Math.max(30,sw+(e2.clientX-sx))+'px';tePositionImgH(img);}
+    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+    document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
   });
+  _h.appendChild(_se);
+
+  // مقبض أسفل-وسط: يغير الارتفاع فقط
+  const _sb=document.createElement('div');
+  _sb.style.cssText='position:absolute;bottom:-10px;left:calc(50% - 10px);width:20px;height:20px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;cursor:ns-resize;';
+  _sb.addEventListener('pointerdown',ev=>{
+    const img=window._teCurImg;if(!img)return;
+    ev.preventDefault();ev.stopPropagation();
+    const sh2=img.getBoundingClientRect().height;
+    img.style.height=sh2+'px';
+    const sy=ev.clientY;
+    function mv(e2){e2.preventDefault();img.style.height=Math.max(30,sh2+(e2.clientY-sy))+'px';tePositionImgH(img);}
+    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+    document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
+  });
+  _h.appendChild(_sb);
+
+  // زر الحذف
   const _del=document.createElement('div');_del.textContent='X';
   _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
   _del.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(ar?'تم الحذف':'Deleted','ok');}});
@@ -2451,11 +2458,8 @@ function buildTextEditor(){
         e.preventDefault();e.stopImmediatePropagation();
         if(ev==='pointerdown'||ev==='touchstart'){
           const img=e.target;
-          // ثبّت العرض فقط — الارتفاع يتبع نسبة الصورة تلقائياً
-          img.style.width=img.offsetWidth+'px';
-          img.style.height='';
-          window._teCurImg=img;
-          tePositionImgH(img);_h.style.display='block';
+          img.style.width=img.offsetWidth+'px';img.style.height='';
+          window._teCurImg=img;tePositionImgH(img);_h.style.display='block';
         }
       }else if((ev==='pointerdown'||ev==='touchstart')&&!_h.contains(e.target)){
         _h.style.display='none';window._teCurImg=null;
