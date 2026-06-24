@@ -2319,15 +2319,13 @@ function doNote(){
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
   const ar=_lang==='ar';
-  const H=window.innerHeight;
   const sh=document.getElementById('sheet');
-  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';}
-  // اجعل sheetBody عمود ثابت — الشريط ثابت والمحرر يتمرر
+  if(sh){sh.style.height='100%';sh.style.maxHeight='100%';sh.style.borderRadius='0';}
   const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;height:100%;';}
+  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
 
   document.getElementById('sheetBody').innerHTML=`
-    <div style="flex-shrink:0;">
+    <div style="flex-shrink:0;background:#f3f3f3;border-bottom:1px solid #ddd;">
       <div id="teToolbar">
         <span class="ql-formats">
           <button class="ql-bold" title="${ar?'عريض':'Bold'}"></button>
@@ -2335,6 +2333,16 @@ function buildTextEditor(){
           <button class="ql-underline" title="${ar?'تسطير':'Underline'}"></button>
         </span>
         <span class="ql-formats">
+          <select id="teFontSel" title="${ar?'نوع الخط':'Font'}" style="height:24px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:11px;padding:0 2px;max-width:80px;">
+            <option value="">${ar?'الخط':'Font'}</option>
+            <option value="Amiri">${ar?'أميري':'Amiri'}</option>
+            <option value="Scheherazade New">${ar?'شهرزاد':'Scheherazade'}</option>
+            <option value="Cairo">${ar?'القاهرة':'Cairo'}</option>
+            <option value="Tajawal">${ar?'تجوال':'Tajawal'}</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">Courier</option>
+            <option value="Arial">Arial</option>
+          </select>
           <select class="ql-size" title="${ar?'حجم الخط':'Size'}">
             <option value="12px">12</option><option value="14px" selected>14</option>
             <option value="16px">16</option><option value="18px">18</option>
@@ -2356,18 +2364,6 @@ function buildTextEditor(){
           <button class="ql-clean" title="${ar?'مسح':'Clear'}"></button>
         </span>
       </div>
-      <div style="padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;">
-        <select id="teFontSel" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;padding:0 6px;color:#333;">
-          <option value="">${ar?'نوع الخط — اختر':'Font — select'}</option>
-          <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
-          <option value="Scheherazade New">${ar?'شهرزاد (تقليدي)':'Scheherazade'}</option>
-          <option value="Cairo">${ar?'القاهرة (عصري)':'Cairo'}</option>
-          <option value="Tajawal">${ar?'تجوال (بسيط)':'Tajawal'}</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Arial">Arial</option>
-        </select>
-      </div>
     </div>
     <div id="teEditor" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
     <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
@@ -2379,7 +2375,6 @@ function buildTextEditor(){
       </div>
     </div>`;
 
-  // تسجيل الخطوط
   try{
     const FontStyle=Quill.import('attributors/style/font');
     FontStyle.whitelist=['Amiri','Scheherazade New','Cairo','Tajawal','Georgia','Courier New','Arial'];
@@ -2395,7 +2390,6 @@ function buildTextEditor(){
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(r){if(r)window._teLastRange=r;});
 
-  // قائمة الخطوط
   const fontSel=document.getElementById('teFontSel');
   if(fontSel){
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
@@ -2409,7 +2403,6 @@ function buildTextEditor(){
     });
   }
 
-  // مقابض الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
@@ -2423,7 +2416,6 @@ function buildTextEditor(){
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
       const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:window.innerWidth;
-      // ثبّت الأبعاد الحالية لمنع تغيير الارتفاع تلقائياً عند سحب العرض
       const sw=img.offsetWidth,sh2=img.offsetHeight;
       img.style.width=sw+'px';img.style.height=sh2+'px';
       const sx=ev.clientX,sy=ev.clientY;
@@ -2454,7 +2446,6 @@ function buildTextEditor(){
         e.preventDefault();e.stopImmediatePropagation();
         if(ev==='pointerdown'||ev==='touchstart'){
           const img=e.target;
-          // ثبّت الأبعاد فور الاختيار
           img.style.width=img.offsetWidth+'px';
           img.style.height=img.offsetHeight+'px';
           window._teCurImg=img;
@@ -2466,7 +2457,6 @@ function buildTextEditor(){
     },{passive:false,capture:true});
   });
 
-  // تلميحات الشريط
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
   tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
   tb.addEventListener('touchend',e=>{clearTimeout(_tmr);if(_lp){e.preventDefault();e.stopPropagation();}},{passive:false});
