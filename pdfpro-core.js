@@ -2319,8 +2319,10 @@ function doNote(){
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
   const ar=_lang==='ar';
+  // سجّل الارتفاع قبل أي شيء (قبل فتح الكيبورد)
+  const H=window.innerHeight;
   const sh=document.getElementById('sheet');
-  if(sh){sh.style.height=window.innerHeight+'px';sh.style.maxHeight=window.innerHeight+'px';sh.style.borderRadius='0';}
+  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';sh.style.overflow='hidden';}
 
   document.getElementById('sheetBody').innerHTML=`
     <div id="teToolbar">
@@ -2338,33 +2340,33 @@ function buildTextEditor(){
         </select>
       </span>
       <span class="ql-formats">
-        <select class="ql-color" title="${ar?'لون النص':'Color'}"></select>
+        <select class="ql-color" title="${ar?'لون النص':'Text Color'}"></select>
         <select class="ql-background" title="${ar?'تظليل':'Highlight'}"></select>
       </span>
       <span class="ql-formats">
         <select class="ql-align" title="${ar?'محاذاة':'Align'}"></select>
       </span>
       <span class="ql-formats">
-        <button class="ql-list" value="ordered" title="${ar?'مرقمة':'Numbered'}"></button>
-        <button class="ql-list" value="bullet" title="${ar?'نقطية':'Bullets'}"></button>
-        <button class="ql-image" title="${ar?'صورة':'Image'}"></button>
+        <button class="ql-list" value="ordered" title="${ar?'قائمة مرقمة':'Numbered'}"></button>
+        <button class="ql-list" value="bullet" title="${ar?'قائمة نقطية':'Bullets'}"></button>
+        <button class="ql-image" title="${ar?'إدراج صورة':'Insert Image'}"></button>
         <button class="ql-clean" title="${ar?'مسح تنسيق':'Clear'}"></button>
       </span>
     </div>
-    <div style="padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;border-top:1px solid #ddd;">
+    <div style="padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;">
       <select id="teFontSel" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;padding:0 6px;color:#333;">
         <option value="">${ar?'نوع الخط — اختر':'Font — select'}</option>
-        <option value="Amiri">${ar?'أميري — خط كلاسيكي (مرحبا)':'Amiri — أميري'}</option>
-        <option value="Scheherazade New">${ar?'شهرزاد — خط تقليدي (مرحبا)':'Scheherazade'}</option>
-        <option value="Cairo">${ar?'القاهرة — خط عصري (مرحبا)':'Cairo'}</option>
-        <option value="Tajawal">${ar?'تجوال — خط بسيط (مرحبا)':'Tajawal'}</option>
-        <option value="Georgia">Georgia — Hello</option>
-        <option value="Courier New">Courier New — Hello</option>
-        <option value="Arial">Arial — Hello</option>
+        <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
+        <option value="Scheherazade New">${ar?'شهرزاد (تقليدي)':'Scheherazade'}</option>
+        <option value="Cairo">${ar?'القاهرة (عصري)':'Cairo'}</option>
+        <option value="Tajawal">${ar?'تجوال (بسيط)':'Tajawal'}</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Arial">Arial</option>
       </select>
     </div>
-    <div id="teEditor" style="min-height:300px;background:#fff;"></div>
-    <div style="padding:12px;background:var(--bg);">
+    <div id="teEditor" style="min-height:300px;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+    <div style="padding:10px;background:var(--bg);flex-shrink:0;">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -2381,7 +2383,7 @@ function buildTextEditor(){
     const SizeStyle=Quill.import('attributors/style/size');
     SizeStyle.whitelist=['12px','14px','16px','18px','24px','32px','48px'];
     Quill.register({'formats/size':SizeStyle},true);
-  }catch(e){console.warn(e);}
+  }catch(e){}
 
   window._teQuill=new Quill('#teEditor',{theme:'snow',modules:{toolbar:'#teToolbar'}});
   window._teQuill.root.setAttribute('dir',ar?'rtl':'ltr');
@@ -2395,17 +2397,11 @@ function buildTextEditor(){
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
     fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
     fontSel.addEventListener('change',function(){
-      const fv=this.value;
-      const q=window._teQuill;if(!q)return;
+      const fv=this.value;const q=window._teQuill;if(!q)return;
       const range=window._teLastRange||q.getSelection();if(!range)return;
       q.root.focus();
-      try{
-        q.setSelection(range.index,range.length);
-        if(range.length>0){q.formatText(range.index,range.length,'font',fv||false,Quill.sources.USER);}
-        else{q.format('font',fv||false,Quill.sources.USER);}
-      }catch(e){console.warn(e);}
-      window._teLastRange=null;
-      setTimeout(()=>{this.value='';},300);
+      try{q.setSelection(range.index,range.length);if(range.length>0){q.formatText(range.index,range.length,'font',fv||false,Quill.sources.USER);}else{q.format('font',fv||false,Quill.sources.USER);}}catch(e){}
+      window._teLastRange=null;setTimeout(()=>{this.value='';},300);
     });
   }
 
@@ -2423,7 +2419,10 @@ function buildTextEditor(){
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
       const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:window.innerWidth;
-      const sx=ev.clientX,sy=ev.clientY,sw=img.offsetWidth,sh2=img.offsetHeight;
+      // ثبّت الأبعاد الحالية لمنع تغيير الارتفاع تلقائياً عند سحب العرض
+      const sw=img.offsetWidth,sh2=img.offsetHeight;
+      img.style.width=sw+'px';img.style.height=sh2+'px';
+      const sx=ev.clientX,sy=ev.clientY;
       function mv(e2){
         e2.preventDefault();
         const dx=e2.clientX-sx,dy=e2.clientY-sy;
@@ -2447,13 +2446,23 @@ function buildTextEditor(){
   document.addEventListener('pointerdown',e=>{if(e.target.tagName==='IMG'||_h.contains(e.target))return;_h.style.display='none';window._teCurImg=null;});
   ['pointerdown','touchstart','touchend','mousedown','click'].forEach(ev=>{
     window._teQuill.root.addEventListener(ev,function(e){
-      if(e.target.tagName==='IMG'){e.preventDefault();e.stopImmediatePropagation();
-        if(ev==='pointerdown'||ev==='touchstart'){window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';}
-      }else if((ev==='pointerdown'||ev==='touchstart')&&!_h.contains(e.target)){_h.style.display='none';window._teCurImg=null;}
+      if(e.target.tagName==='IMG'){
+        e.preventDefault();e.stopImmediatePropagation();
+        if(ev==='pointerdown'||ev==='touchstart'){
+          const img=e.target;
+          // ثبّت الأبعاد فور الاختيار
+          img.style.width=img.offsetWidth+'px';
+          img.style.height=img.offsetHeight+'px';
+          window._teCurImg=img;
+          tePositionImgH(img);_h.style.display='block';
+        }
+      }else if((ev==='pointerdown'||ev==='touchstart')&&!_h.contains(e.target)){
+        _h.style.display='none';window._teCurImg=null;
+      }
     },{passive:false,capture:true});
   });
 
-  // تلميحات
+  // تلميحات الشريط
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
   tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
   tb.addEventListener('touchend',e=>{clearTimeout(_tmr);if(_lp){e.preventDefault();e.stopPropagation();}},{passive:false});
