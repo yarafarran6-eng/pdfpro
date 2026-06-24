@@ -2410,10 +2410,49 @@ function buildTextEditor(){
     });
   }
 
-  // مقابض الصورة — 4 مقابض بمنطق RTL صحيح
+  // إصلاح الكيبورد باستخدام visualViewport
+  function teFixHeight(){
+    const el=document.getElementById('sheet');
+    if(!el)return;
+    const h=window.visualViewport?window.visualViewport.height:window.innerHeight;
+    el.style.height=h+'px';el.style.maxHeight=h+'px';
+  }
+  teFixHeight();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',teFixHeight);
+    window.visualViewport.addEventListener('scroll',teFixHeight);
+  }
+
+  // مقابض الصورة — 4 مقابض + زر تحريك
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
+
+  // زر التحريك — دائرة حمراء في المنتصف
+  const _mv=document.createElement('div');
+  _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;background:#e53935;border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;display:flex;align-items:center;justify-content:center;';
+  _mv.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
+  _mv.addEventListener('pointerdown',ev=>{
+    const img=window._teCurImg;if(!img)return;
+    ev.preventDefault();ev.stopPropagation();
+    img.style.position='relative';
+    if(!img.style.right||img.style.right==='auto')img.style.right='0px';
+    if(!img.style.top||img.style.top==='auto')img.style.top='0px';
+    img.style.left='auto';
+    const sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0;
+    const sx=ev.clientX,sy=ev.clientY;
+    function mv(e2){
+      e2.preventDefault();
+      const dx=e2.clientX-sx,dy=e2.clientY-sy;
+      img.style.right=(sr-dx)+'px'; // في RTL: تقليل right = تحرك يمين
+      img.style.top=(st+dy)+'px';
+      tePositionImgH(img);
+    }
+    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+    document.addEventListener('pointermove',mv,{passive:false});
+    document.addEventListener('pointerup',up);
+  });
+  _h.appendChild(_mv);
 
   [{id:'n',css:'top:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
    {id:'s',css:'bottom:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
@@ -2472,21 +2511,25 @@ function buildTextEditor(){
   _del.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(ar?'تم الحذف':'Deleted','ok');}});
   _h.appendChild(_del);
   document.body.appendChild(_h);
-  document.addEventListener('pointerdown',e=>{if(e.target.tagName==='IMG'||_h.contains(e.target))return;_h.style.display='none';window._teCurImg=null;});
-  ['pointerdown','touchstart','touchend','mousedown','click'].forEach(ev=>{
-    window._teQuill.root.addEventListener(ev,function(e){
-      if(e.target.tagName==='IMG'){
-        e.preventDefault();e.stopImmediatePropagation();
-        if(ev==='pointerdown'||ev==='touchstart'){
-          const img=e.target;
-          img.style.width=img.offsetWidth+'px';
-          img.style.height=img.offsetHeight+'px';
-          window._teCurImg=img;tePositionImgH(img);_h.style.display='block';
-        }
-      }else if((ev==='pointerdown'||ev==='touchstart')&&!_h.contains(e.target)){
-        _h.style.display='none';window._teCurImg=null;
-      }
-    },{passive:false,capture:true});
+  // أحداث الصورة — touchstart فقط مع capture لمنع الكيبورد
+  // باقي الأحداث بدون capture لإتاحة التمرير الطبيعي
+  window._teQuill.root.addEventListener('touchstart',function(e){
+    if(e.target.tagName==='IMG'){
+      e.preventDefault();e.stopImmediatePropagation();
+      window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';
+    }else if(!_h.contains(e.target)){
+      _h.style.display='none';window._teCurImg=null;
+    }
+  },{passive:false,capture:true});
+  window._teQuill.root.addEventListener('pointerdown',function(e){
+    if(e.target.tagName==='IMG'){
+      e.preventDefault();e.stopImmediatePropagation();
+      window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';
+    }
+  },{passive:false,capture:true});
+  document.addEventListener('pointerdown',e=>{
+    if(e.target.tagName==='IMG'||_h.contains(e.target))return;
+    _h.style.display='none';window._teCurImg=null;
   });
 
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
