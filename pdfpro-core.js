@@ -2326,6 +2326,19 @@ function buildTextEditor(){
 
   document.getElementById('sheetBody').innerHTML=`
     <div style="flex-shrink:0;background:#f3f3f3;border-bottom:1px solid #ddd;">
+      <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;">
+        <span style="font-size:10px;color:#666;">${ar?'الخط:':'Font:'}</span>
+        <select id="teFontSel" style="flex:1;height:26px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:12px;padding:0 4px;color:#333;">
+          <option value="">${ar?'اختر الخط':'Select font'}</option>
+          <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
+          <option value="Scheherazade New">${ar?'شهرزاد (تقليدي)':'Scheherazade'}</option>
+          <option value="Cairo">${ar?'القاهرة (عصري)':'Cairo'}</option>
+          <option value="Tajawal">${ar?'تجوال (بسيط)':'Tajawal'}</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Arial">Arial</option>
+        </select>
+      </div>
       <div id="teToolbar">
         <span class="ql-formats">
           <button class="ql-bold" title="${ar?'عريض':'Bold'}"></button>
@@ -2333,16 +2346,6 @@ function buildTextEditor(){
           <button class="ql-underline" title="${ar?'تسطير':'Underline'}"></button>
         </span>
         <span class="ql-formats">
-          <select id="teFontSel" title="${ar?'نوع الخط':'Font'}" style="height:24px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:11px;padding:0 2px;max-width:80px;">
-            <option value="">${ar?'الخط':'Font'}</option>
-            <option value="Amiri">${ar?'أميري':'Amiri'}</option>
-            <option value="Scheherazade New">${ar?'شهرزاد':'Scheherazade'}</option>
-            <option value="Cairo">${ar?'القاهرة':'Cairo'}</option>
-            <option value="Tajawal">${ar?'تجوال':'Tajawal'}</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Courier</option>
-            <option value="Arial">Arial</option>
-          </select>
           <select class="ql-size" title="${ar?'حجم الخط':'Size'}">
             <option value="12px">12</option><option value="14px" selected>14</option>
             <option value="16px">16</option><option value="18px">18</option>
@@ -2390,21 +2393,8 @@ function buildTextEditor(){
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(r){if(r)window._teLastRange=r;});
 
-  // أضف خيارات الخط بعد تهيئة Quill (وإلا يحذفها Quill)
   const fontSel=document.getElementById('teFontSel');
   if(fontSel){
-    const opts=[
-      ['',ar?'الخط':'Font'],
-      ['Amiri',ar?'أميري':'Amiri'],
-      ['Scheherazade New',ar?'شهرزاد':'Scheherazade'],
-      ['Cairo',ar?'القاهرة':'Cairo'],
-      ['Tajawal',ar?'تجوال':'Tajawal'],
-      ['Georgia','Georgia'],
-      ['Courier New','Courier'],
-      ['Arial','Arial']
-    ];
-    fontSel.innerHTML='';
-    opts.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;fontSel.appendChild(o);});
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
     fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
     fontSel.addEventListener('change',function(){
@@ -2419,8 +2409,7 @@ function buildTextEditor(){
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
-  [{id:'n',s:'top:-9px;left:calc(50% - 9px);cursor:ns-resize;'},
-   {id:'s',s:'bottom:-9px;left:calc(50% - 9px);cursor:ns-resize;'},
+  [{id:'s',s:'bottom:-9px;left:calc(50% - 9px);cursor:ns-resize;'},
    {id:'w',s:'left:-9px;top:calc(50% - 9px);cursor:ew-resize;'},
    {id:'e',s:'right:-9px;top:calc(50% - 9px);cursor:ew-resize;'}].forEach(({id,s})=>{
     const d=document.createElement('div');
