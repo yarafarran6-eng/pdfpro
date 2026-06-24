@@ -2410,40 +2410,62 @@ function buildTextEditor(){
     });
   }
 
-  // مقابض الصورة
+  // مقابض الصورة — 4 مقابض بمنطق صحيح
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
 
-  // مقبض أسفل-يمين: يغير العرض (الارتفاع يتبع تلقائياً)
-  const _se=document.createElement('div');
-  _se.style.cssText='position:absolute;bottom:-10px;right:-10px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;cursor:nwse-resize;';
-  _se.addEventListener('pointerdown',ev=>{
-    const img=window._teCurImg;if(!img)return;
-    ev.preventDefault();ev.stopPropagation();
-    const sw=img.offsetWidth;
-    img.style.width=sw+'px';img.style.height='';
-    const sx=ev.clientX;
-    function mv(e2){e2.preventDefault();img.style.width=Math.max(30,sw+(e2.clientX-sx))+'px';tePositionImgH(img);}
-    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
-    document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
+  const handles4=[
+    {id:'n',css:'top:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
+    {id:'s',css:'bottom:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
+    {id:'w',css:'left:-10px;top:calc(50% - 10px);cursor:ew-resize;'},
+    {id:'e',css:'right:-10px;top:calc(50% - 10px);cursor:ew-resize;'},
+  ];
+  handles4.forEach(({id,css})=>{
+    const d=document.createElement('div');
+    d.style.cssText='position:absolute;width:20px;height:20px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;'+css;
+    d.addEventListener('pointerdown',ev=>{
+      const img=window._teCurImg;if(!img)return;
+      ev.preventDefault();ev.stopPropagation();
+      // تأكد من position:relative وتثبيت الأبعاد الحالية
+      img.style.position='relative';
+      if(!img.style.left)img.style.left='0px';
+      if(!img.style.top)img.style.top='0px';
+      const sw=img.offsetWidth,sh2=img.offsetHeight;
+      const sl=parseFloat(img.style.left)||0,st=parseFloat(img.style.top)||0;
+      img.style.width=sw+'px';img.style.height=sh2+'px';
+      const sx=ev.clientX,sy=ev.clientY;
+      function mv(e2){
+        e2.preventDefault();
+        const dx=e2.clientX-sx,dy=e2.clientY-sy;
+        if(id==='s'){
+          // أسفل: يكبر للأسفل — الحافة العليا ثابتة
+          img.style.height=Math.max(30,sh2+dy)+'px';
+        }
+        if(id==='n'){
+          // أعلى: يكبر للأعلى — الحافة السفلى ثابتة، نحرك الصورة للأعلى
+          const nh=Math.max(30,sh2-dy);
+          img.style.height=nh+'px';
+          img.style.top=(st+dy)+'px';
+        }
+        if(id==='e'){
+          // يمين: يكبر لليمين — الحافة اليسرى ثابتة
+          img.style.width=Math.max(30,sw+dx)+'px';
+        }
+        if(id==='w'){
+          // يسار: يكبر لليسار — الحافة اليمنى ثابتة، نحرك الصورة لليسار
+          const nw=Math.max(30,sw-dx);
+          img.style.width=nw+'px';
+          img.style.left=(sl+dx)+'px';
+        }
+        tePositionImgH(img);
+      }
+      function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
+      document.addEventListener('pointermove',mv,{passive:false});
+      document.addEventListener('pointerup',up);
+    });
+    _h.appendChild(d);
   });
-  _h.appendChild(_se);
-
-  // مقبض أسفل-وسط: يغير الارتفاع فقط
-  const _sb=document.createElement('div');
-  _sb.style.cssText='position:absolute;bottom:-10px;left:calc(50% - 10px);width:20px;height:20px;background:#e53935;border:2px solid #fff;border-radius:4px;pointer-events:auto;touch-action:none;cursor:ns-resize;';
-  _sb.addEventListener('pointerdown',ev=>{
-    const img=window._teCurImg;if(!img)return;
-    ev.preventDefault();ev.stopPropagation();
-    const sh2=img.getBoundingClientRect().height;
-    img.style.height=sh2+'px';
-    const sy=ev.clientY;
-    function mv(e2){e2.preventDefault();img.style.height=Math.max(30,sh2+(e2.clientY-sy))+'px';tePositionImgH(img);}
-    function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
-    document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
-  });
-  _h.appendChild(_sb);
 
   // زر الحذف
   const _del=document.createElement('div');_del.textContent='X';
