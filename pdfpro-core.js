@@ -2390,8 +2390,21 @@ function buildTextEditor(){
   window._teLastRange=null;
   window._teQuill.on('selection-change',function(r){if(r)window._teLastRange=r;});
 
+  // أضف خيارات الخط بعد تهيئة Quill (وإلا يحذفها Quill)
   const fontSel=document.getElementById('teFontSel');
   if(fontSel){
+    const opts=[
+      ['',ar?'الخط':'Font'],
+      ['Amiri',ar?'أميري':'Amiri'],
+      ['Scheherazade New',ar?'شهرزاد':'Scheherazade'],
+      ['Cairo',ar?'القاهرة':'Cairo'],
+      ['Tajawal',ar?'تجوال':'Tajawal'],
+      ['Georgia','Georgia'],
+      ['Courier New','Courier'],
+      ['Arial','Arial']
+    ];
+    fontSel.innerHTML='';
+    opts.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;fontSel.appendChild(o);});
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
     fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
     fontSel.addEventListener('change',function(){
@@ -2415,10 +2428,13 @@ function buildTextEditor(){
     d.addEventListener('pointerdown',ev=>{
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
-      const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:window.innerWidth;
       const sw=img.offsetWidth,sh2=img.offsetHeight;
-      img.style.width=sw+'px';img.style.height=sh2+'px';
+      img.style.width=sw+'px';
+      // ثبّت الارتفاع فقط عند سحب الأعلى أو الأسفل
+      if(id==='n'||id==='s'){img.style.height=sh2+'px';}
+      else{img.style.height='';}
       const sx=ev.clientX,sy=ev.clientY;
+      const maxW=window._teQuill?window._teQuill.root.offsetWidth-4:window.innerWidth;
       function mv(e2){
         e2.preventDefault();
         const dx=e2.clientX-sx,dy=e2.clientY-sy;
@@ -2446,8 +2462,9 @@ function buildTextEditor(){
         e.preventDefault();e.stopImmediatePropagation();
         if(ev==='pointerdown'||ev==='touchstart'){
           const img=e.target;
+          // ثبّت العرض فقط — الارتفاع يتبع نسبة الصورة تلقائياً
           img.style.width=img.offsetWidth+'px';
-          img.style.height=img.offsetHeight+'px';
+          img.style.height='';
           window._teCurImg=img;
           tePositionImgH(img);_h.style.display='block';
         }
