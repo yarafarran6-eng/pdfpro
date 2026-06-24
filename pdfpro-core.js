@@ -2443,20 +2443,20 @@ function buildTextEditor(){
           img.style.height=Math.max(30,sh2+dy)+'px';
         }
         if(id==='n'){
-          // أعلى: يكبر للأعلى — الحافة السفلى ثابتة، نحرك الصورة للأعلى
+          // أعلى: يكبر للأعلى — الحافة السفلى ثابتة
           const nh=Math.max(30,sh2-dy);
           img.style.height=nh+'px';
           img.style.top=(st+dy)+'px';
         }
         if(id==='e'){
-          // يمين: يكبر لليمين — الحافة اليسرى ثابتة
-          img.style.width=Math.max(30,sw+dx)+'px';
-        }
-        if(id==='w'){
-          // يسار: يكبر لليسار — الحافة اليمنى ثابتة، نحرك الصورة لليسار
-          const nw=Math.max(30,sw-dx);
+          // يمين RTL: نغير العرض ونحرك الصورة يميناً معاً لتثبيت الحافة اليسرى
+          const nw=Math.max(30,sw+dx);
           img.style.width=nw+'px';
           img.style.left=(sl+dx)+'px';
+        }
+        if(id==='w'){
+          // يسار RTL: نغير العرض فقط — الحافة اليمنى ثابتة تلقائياً
+          img.style.width=Math.max(30,sw-dx)+'px';
         }
         tePositionImgH(img);
       }
