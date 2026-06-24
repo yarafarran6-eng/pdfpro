@@ -2319,54 +2319,58 @@ function doNote(){
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
   const ar=_lang==='ar';
-  // سجّل الارتفاع قبل أي شيء (قبل فتح الكيبورد)
   const H=window.innerHeight;
   const sh=document.getElementById('sheet');
-  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';sh.style.overflow='hidden';}
+  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';}
+  // اجعل sheetBody عمود ثابت — الشريط ثابت والمحرر يتمرر
+  const sb=document.getElementById('sheetBody');
+  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;height:100%;';}
 
   document.getElementById('sheetBody').innerHTML=`
-    <div id="teToolbar">
-      <span class="ql-formats">
-        <button class="ql-bold" title="${ar?'عريض':'Bold'}"></button>
-        <button class="ql-italic" title="${ar?'مائل':'Italic'}"></button>
-        <button class="ql-underline" title="${ar?'تسطير':'Underline'}"></button>
-      </span>
-      <span class="ql-formats">
-        <select class="ql-size" title="${ar?'حجم الخط':'Size'}">
-          <option value="12px">12</option><option value="14px" selected>14</option>
-          <option value="16px">16</option><option value="18px">18</option>
-          <option value="24px">24</option><option value="32px">32</option>
-          <option value="48px">48</option>
+    <div style="flex-shrink:0;">
+      <div id="teToolbar">
+        <span class="ql-formats">
+          <button class="ql-bold" title="${ar?'عريض':'Bold'}"></button>
+          <button class="ql-italic" title="${ar?'مائل':'Italic'}"></button>
+          <button class="ql-underline" title="${ar?'تسطير':'Underline'}"></button>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-size" title="${ar?'حجم الخط':'Size'}">
+            <option value="12px">12</option><option value="14px" selected>14</option>
+            <option value="16px">16</option><option value="18px">18</option>
+            <option value="24px">24</option><option value="32px">32</option>
+            <option value="48px">48</option>
+          </select>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-color" title="${ar?'لون النص':'Color'}"></select>
+          <select class="ql-background" title="${ar?'تظليل':'Highlight'}"></select>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-align" title="${ar?'محاذاة':'Align'}"></select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-list" value="ordered" title="${ar?'مرقمة':'Numbered'}"></button>
+          <button class="ql-list" value="bullet" title="${ar?'نقطية':'Bullets'}"></button>
+          <button class="ql-image" title="${ar?'صورة':'Image'}"></button>
+          <button class="ql-clean" title="${ar?'مسح':'Clear'}"></button>
+        </span>
+      </div>
+      <div style="padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;">
+        <select id="teFontSel" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;padding:0 6px;color:#333;">
+          <option value="">${ar?'نوع الخط — اختر':'Font — select'}</option>
+          <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
+          <option value="Scheherazade New">${ar?'شهرزاد (تقليدي)':'Scheherazade'}</option>
+          <option value="Cairo">${ar?'القاهرة (عصري)':'Cairo'}</option>
+          <option value="Tajawal">${ar?'تجوال (بسيط)':'Tajawal'}</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Arial">Arial</option>
         </select>
-      </span>
-      <span class="ql-formats">
-        <select class="ql-color" title="${ar?'لون النص':'Text Color'}"></select>
-        <select class="ql-background" title="${ar?'تظليل':'Highlight'}"></select>
-      </span>
-      <span class="ql-formats">
-        <select class="ql-align" title="${ar?'محاذاة':'Align'}"></select>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-list" value="ordered" title="${ar?'قائمة مرقمة':'Numbered'}"></button>
-        <button class="ql-list" value="bullet" title="${ar?'قائمة نقطية':'Bullets'}"></button>
-        <button class="ql-image" title="${ar?'إدراج صورة':'Insert Image'}"></button>
-        <button class="ql-clean" title="${ar?'مسح تنسيق':'Clear'}"></button>
-      </span>
+      </div>
     </div>
-    <div style="padding:4px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;">
-      <select id="teFontSel" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;padding:0 6px;color:#333;">
-        <option value="">${ar?'نوع الخط — اختر':'Font — select'}</option>
-        <option value="Amiri">${ar?'أميري (كلاسيكي)':'Amiri'}</option>
-        <option value="Scheherazade New">${ar?'شهرزاد (تقليدي)':'Scheherazade'}</option>
-        <option value="Cairo">${ar?'القاهرة (عصري)':'Cairo'}</option>
-        <option value="Tajawal">${ar?'تجوال (بسيط)':'Tajawal'}</option>
-        <option value="Georgia">Georgia</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Arial">Arial</option>
-      </select>
-    </div>
-    <div id="teEditor" style="min-height:300px;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
-    <div style="padding:10px;background:var(--bg);flex-shrink:0;">
+    <div id="teEditor" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
+    <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
       <div style="display:flex;gap:8px;margin-top:8px">
