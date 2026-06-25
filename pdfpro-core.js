@@ -2320,14 +2320,16 @@ function doNote(){
 function buildTextEditor(){
   const ar=_lang==='ar';
   const sh=document.getElementById('sheet');
-  if(sh){sh.style.height='100%';sh.style.maxHeight='100%';sh.style.borderRadius='0';}
-  // أعد sheetBody للتمرير الطبيعي حتى يعمل الشريط الجانبي
-  const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
+  const H=window.innerHeight;
+  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';}
   // ثبّت body لمنع انزياح الكيبورد
   document.body.style.overflow='hidden';
   document.body.style.position='fixed';
-  document.body.style.width='100%';
+  document.body.style.top='0';document.body.style.left='0';
+  document.body.style.right='0';document.body.style.bottom='0';
+  // sheetBody قابل للتمرير حتى يعمل الشريط الجانبي
+  const sb=document.getElementById('sheetBody');
+  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
 
   document.getElementById('sheetBody').innerHTML=`
     <div style="position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
@@ -2411,7 +2413,8 @@ function buildTextEditor(){
         if(range&&range.length>0){q.formatText(range.index,range.length,'font',fv,Quill.sources.USER);}
         else{const idx=range?range.index:q.getLength()-1;q.setSelection(idx,0);q.format('font',fv,Quill.sources.USER);}
       }catch(e){}
-      window._teLastRange=null;setTimeout(()=>{this.value='';},200);
+      window._teLastRange=null;
+      // لا نعيد القائمة للفارغ — نُبقي الخط المختار ظاهراً
     });
   }
 
