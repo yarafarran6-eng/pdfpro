@@ -2323,11 +2323,8 @@ function buildTextEditor(){
   const H=window.innerHeight;
   if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';sh.style.overflow='hidden';}
   document.body.style.overflow='hidden';
-  document.body.style.position='fixed';
-  document.body.style.top='0';document.body.style.left='0';
-  document.body.style.right='0';document.body.style.bottom='0';
   const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
+  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
 
   document.getElementById('sheetBody').innerHTML=`
     <div style="position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
