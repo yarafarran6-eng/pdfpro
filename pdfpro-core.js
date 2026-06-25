@@ -2319,15 +2319,33 @@ function doNote(){
 // محرر النصوص (Text Editor)
 function buildTextEditor(){
   const ar=_lang==='ar';
-  const sh=document.getElementById('sheet');
-  const H=window.innerHeight;
-  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';sh.style.overflow='hidden';}
+
+  // تتبّع visualViewport وحرّك الـ sheet ليكون دائماً في المنطقة المرئية
+  window._teFixSheetPos=function(){
+    const sh=document.getElementById('sheet');if(!sh)return;
+    const vv=window.visualViewport;
+    const top=vv?vv.offsetTop:0;
+    const h=vv?vv.height:window.innerHeight;
+    sh.style.position='fixed';
+    sh.style.left='0';sh.style.right='0';
+    sh.style.top=top+'px';
+    sh.style.height=h+'px';
+    sh.style.maxHeight='none';
+    sh.style.borderRadius='0';
+    sh.style.overflow='hidden';
+  };
+  window._teFixSheetPos();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',window._teFixSheetPos);
+    window.visualViewport.addEventListener('scroll',window._teFixSheetPos);
+  }
+
   document.body.style.overflow='hidden';
   const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
+  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
 
   document.getElementById('sheetBody').innerHTML=`
-    <div style="position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
+    <div style="flex-shrink:0;position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
       <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;">
         <span style="font-size:10px;color:#666;white-space:nowrap">${ar?'الخط:':'Font:'}</span>
         <select id="teFontSel" style="flex:1;height:26px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:12px;padding:0 4px;color:#333;">
@@ -2370,8 +2388,8 @@ function buildTextEditor(){
         </span>
       </div>
     </div>
-    <div id="teEditor" style="min-height:400px;background:#fff;"></div>
-    <div style="padding:10px;background:var(--bg);border-top:1px solid var(--border);">
+    <div id="teEditor" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
+    <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -2400,8 +2418,8 @@ function buildTextEditor(){
     fontSel.addEventListener('mousedown',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;});
     fontSel.addEventListener('touchstart',()=>{window._teLastRange=window._teQuill&&window._teQuill.getSelection()||window._teLastRange;},{passive:true});
     fontSel.addEventListener('change',function(){
-      const fv=this.value;if(!fv){this.value='';return;}
-      const q=window._teQuill;if(!q){this.value='';return;}
+      const fv=this.value;if(!fv)return;
+      const q=window._teQuill;if(!q)return;
       q.root.focus();
       const range=window._teLastRange||q.getSelection();
       try{
@@ -2409,29 +2427,57 @@ function buildTextEditor(){
         else{const idx=range?range.index:q.getLength()-1;q.setSelection(idx,0);q.format('font',fv,Quill.sources.USER);}
       }catch(e){}
       window._teLastRange=null;
-      // لا نعيد القائمة للفارغ — نُبقي الخط المختار ظاهراً
     });
   }
 
-  // إصلاح الكيبورد باستخدام visualViewport
-  function teFixHeight(){
-    const el=document.getElementById('sheet');
-    if(!el)return;
-    const h=window.visualViewport?window.visualViewport.height:window.innerHeight;
-    el.style.height=h+'px';el.style.maxHeight=h+'px';
-  }
-  teFixHeight();
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',teFixHeight);
-    window.visualViewport.addEventListener('scroll',teFixHeight);
+  // اجعل الشريط الجانبي يتحكم في #teEditor مباشرة
+  const teEd=document.getElementById('teEditor');
+  const gThumb=document.getElementById('globalThumb');
+  const gSB=document.getElementById('globalSB');
+  if(teEd&&gThumb&&gSB){
+    function teUpdateSB(){
+      const sH=teEd.scrollHeight,cH=teEd.clientHeight,sT=teEd.scrollTop;
+      if(sH<=cH+2){gThumb.style.height='40px';gThumb.style.top='0';gThumb.style.opacity='0.3';return;}
+      gThumb.style.opacity='1';
+      const sbH=gSB.offsetHeight,ratio=cH/sH;
+      const tH=Math.max(36,sbH*ratio);
+      gThumb.style.height=tH+'px';
+      gThumb.style.top=Math.round((sbH-tH)*(sT/(sH-cH)))+'px';
+    }
+    teEd.addEventListener('scroll',teUpdateSB,{passive:true});
+    setTimeout(teUpdateSB,200);
+
+    // سحب الشريط → تمرير المحرر
+    let _sd=false,_sy=0,_ss=0;
+    gThumb.addEventListener('touchstart',function(e){
+      _sd=true;_sy=e.touches[0].clientY;_ss=teEd.scrollTop;e.preventDefault();
+    },{passive:false});
+    gThumb.addEventListener('pointerdown',function(e){
+      _sd=true;_sy=e.clientY;_ss=teEd.scrollTop;e.preventDefault();
+      document.addEventListener('pointermove',_pmv,{passive:false});
+      document.addEventListener('pointerup',_pup);
+    });
+    function _pmv(e){
+      if(!_sd)return;e.preventDefault();
+      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
+      const range=teEd.scrollHeight-teEd.clientHeight;
+      if(range<=0)return;
+      teEd.scrollTop=_ss+(e.clientY-_sy)*(range/(sbH-tH));
+    }
+    function _pup(){_sd=false;document.removeEventListener('pointermove',_pmv);document.removeEventListener('pointerup',_pup);}
+    document.addEventListener('touchmove',function(e){
+      if(!_sd)return;
+      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
+      const range=teEd.scrollHeight-teEd.clientHeight;if(range<=0)return;
+      teEd.scrollTop=_ss+(e.touches[0].clientY-_sy)*(range/(sbH-tH));
+    },{passive:true});
+    document.addEventListener('touchend',function(){_sd=false;});
   }
 
-  // مقابض الصورة — 4 مقابض + زر تحريك
+  // مقابض الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
-
-  // زر التحريك — دائرة حمراء في المنتصف
   const _mv=document.createElement('div');
   _mv.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;background:#e53935;border:2px solid #fff;border-radius:50%;pointer-events:auto;touch-action:none;cursor:move;display:flex;align-items:center;justify-content:center;';
   _mv.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M13 6v5h5V7l4 5-4 5v-4h-5v5h4l-5 4-5-4h4v-5H7v4l-4-5 4-5v4h5V6H8l5-4 5 4z"/></svg>';
@@ -2444,19 +2490,11 @@ function buildTextEditor(){
     img.style.left='auto';
     const sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0;
     const sx=ev.clientX,sy=ev.clientY;
-    function mv(e2){
-      e2.preventDefault();
-      const dx=e2.clientX-sx,dy=e2.clientY-sy;
-      img.style.right=(sr-dx)+'px'; // في RTL: تقليل right = تحرك يمين
-      img.style.top=(st+dy)+'px';
-      tePositionImgH(img);
-    }
+    function mv(e2){e2.preventDefault();img.style.right=(sr-( e2.clientX-sx))+'px';img.style.top=(st+(e2.clientY-sy))+'px';tePositionImgH(img);}
     function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
-    document.addEventListener('pointermove',mv,{passive:false});
-    document.addEventListener('pointerup',up);
+    document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
   });
   _h.appendChild(_mv);
-
   [{id:'n',css:'top:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
    {id:'s',css:'bottom:-10px;left:calc(50% - 10px);cursor:ns-resize;'},
    {id:'w',css:'left:-10px;top:calc(50% - 10px);cursor:ew-resize;'},
@@ -2468,7 +2506,6 @@ function buildTextEditor(){
       const img=window._teCurImg;if(!img)return;
       ev.preventDefault();ev.stopPropagation();
       img.style.position='relative';
-      // في RTL نستخدم right بدل left للتموضع الأفقي
       if(!img.style.right||img.style.right==='auto')img.style.right='0px';
       if(!img.style.top||img.style.top==='auto')img.style.top='0px';
       img.style.left='auto';
@@ -2479,93 +2516,30 @@ function buildTextEditor(){
       function mv(e2){
         e2.preventDefault();
         const dx=e2.clientX-sx,dy=e2.clientY-sy;
-        if(id==='s'){
-          // أسفل: يزيد الارتفاع للأسفل — الحافة العليا ثابتة
-          img.style.height=Math.max(30,sh2+dy)+'px';
-        }
-        if(id==='n'){
-          // أعلى: يزيد الارتفاع للأعلى — الحافة السفلى ثابتة
-          const nh=Math.max(30,sh2-dy);
-          img.style.height=nh+'px';
-          img.style.top=(st+dy)+'px';
-        }
-        if(id==='e'){
-          // يمين RTL: نحرك right للأمام (سالب = يمين) ونزيد العرض
-          // الحافة اليسرى ثابتة، اليمينية تتحرك
-          const nw=Math.max(30,sw+dx);
-          img.style.width=nw+'px';
-          img.style.right=(sr-dx)+'px';
-        }
-        if(id==='w'){
-          // يسار RTL: نغير العرض فقط — الحافة اليمنى ثابتة تلقائياً
-          img.style.width=Math.max(30,sw-dx)+'px';
-        }
+        if(id==='s')img.style.height=Math.max(30,sh2+dy)+'px';
+        if(id==='n'){img.style.height=Math.max(30,sh2-dy)+'px';img.style.top=(st+dy)+'px';}
+        if(id==='e'){img.style.width=Math.max(30,sw+dx)+'px';img.style.right=(sr-dx)+'px';}
+        if(id==='w')img.style.width=Math.max(30,sw-dx)+'px';
         tePositionImgH(img);
       }
       function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
-      document.addEventListener('pointermove',mv,{passive:false});
-      document.addEventListener('pointerup',up);
+      document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
     });
     _h.appendChild(d);
   });
-
   const _del=document.createElement('div');_del.textContent='X';
   _del.style.cssText='position:absolute;top:-12px;right:-12px;width:22px;height:22px;background:#e53935;border:2px solid #fff;border-radius:50%;color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:pointer;pointer-events:auto;font-weight:bold;';
   _del.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();if(window._teCurImg){window._teCurImg.remove();_h.style.display='none';window._teCurImg=null;toast(ar?'تم الحذف':'Deleted','ok');}});
   _h.appendChild(_del);
   document.body.appendChild(_h);
-  // أحداث الصورة — touchstart فقط مع capture لمنع الكيبورد
-  // باقي الأحداث بدون capture لإتاحة التمرير الطبيعي
+  document.addEventListener('pointerdown',e=>{if(e.target.tagName==='IMG'||_h.contains(e.target))return;_h.style.display='none';window._teCurImg=null;});
   window._teQuill.root.addEventListener('touchstart',function(e){
-    if(e.target.tagName==='IMG'){
-      e.preventDefault();e.stopImmediatePropagation();
-      window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';
-    }else if(!_h.contains(e.target)){
-      _h.style.display='none';window._teCurImg=null;
-    }
+    if(e.target.tagName==='IMG'){e.preventDefault();e.stopImmediatePropagation();window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';}
+    else if(!_h.contains(e.target)){_h.style.display='none';window._teCurImg=null;}
   },{passive:false,capture:true});
   window._teQuill.root.addEventListener('pointerdown',function(e){
-    if(e.target.tagName==='IMG'){
-      e.preventDefault();e.stopImmediatePropagation();
-      window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';
-    }
+    if(e.target.tagName==='IMG'){e.preventDefault();e.stopImmediatePropagation();window._teCurImg=e.target;tePositionImgH(e.target);_h.style.display='block';}
   },{passive:false,capture:true});
-  document.addEventListener('pointerdown',e=>{
-    if(e.target.tagName==='IMG'||_h.contains(e.target))return;
-    _h.style.display='none';window._teCurImg=null;
-  });
-
-  // اجعل الشريط الجانبي يتحكم في تمرير #teEditor
-  const teEd=document.getElementById('teEditor');
-  const gThumb=document.getElementById('globalThumb');
-  const gSB=document.getElementById('globalSB');
-  if(teEd&&gThumb&&gSB){
-    // تحديث الشريط عند تمرير المحرر
-    teEd.addEventListener('scroll',function(){
-      const sH=teEd.scrollHeight,cH=teEd.clientHeight,sT=teEd.scrollTop;
-      if(sH<=cH+2){gThumb.style.opacity='0.3';return;}
-      gThumb.style.opacity='1';
-      const sbH=gSB.offsetHeight,ratio=cH/sH;
-      const tH=Math.max(36,sbH*ratio);
-      gThumb.style.height=tH+'px';
-      gThumb.style.top=Math.round((sbH-tH)*(sT/(sH-cH)))+'px';
-    },{passive:true});
-    // اجعل سحب الشريط يتحكم في تمرير المحرر
-    gSB.style.pointerEvents='auto';
-    let _sbDragging=false,_sbStartY=0,_sbStartScroll=0;
-    gThumb.addEventListener('touchstart',function(e){
-      _sbDragging=true;_sbStartY=e.touches[0].clientY;_sbStartScroll=teEd.scrollTop;
-      e.preventDefault();
-    },{passive:false});
-    document.addEventListener('touchmove',function(e){
-      if(!_sbDragging)return;
-      const dy=e.touches[0].clientY-_sbStartY;
-      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
-      const ratio=(teEd.scrollHeight-teEd.clientHeight)/(sbH-tH);
-      teEd.scrollTop=_sbStartScroll+dy*ratio;
-    },{passive:true});
-    document.addEventListener('touchend',function(){_sbDragging=false;});
-  }
 
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
   tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
@@ -2574,15 +2548,14 @@ function buildTextEditor(){
 }
 
 function teCloseFullscreen(){
-  // إعادة body لحالته الطبيعية
   document.body.style.overflow='';
-  document.body.style.position='';
-  document.body.style.width='';
-  const sh=document.getElementById('sheet');
-  if(sh)sh.style.cssText='';
+  if(window.visualViewport&&window._teFixSheetPos){
+    window.visualViewport.removeEventListener('resize',window._teFixSheetPos);
+    window.visualViewport.removeEventListener('scroll',window._teFixSheetPos);
+  }
+  const sh=document.getElementById('sheet');if(sh)sh.style.cssText='';
   closeSheet();
-  window._teQuill=null;
-  window._teLastRange=null;
+  window._teQuill=null;window._teLastRange=null;
   const _h=document.getElementById('teImgH');if(_h)_h.remove();
 }
 
