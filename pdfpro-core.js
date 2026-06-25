@@ -2320,12 +2320,15 @@ function doNote(){
 function buildTextEditor(){
   const ar=_lang==='ar';
 
-  // تتبّع visualViewport وحرّك الـ sheet ليكون دائماً في المنطقة المرئية
+  // تتبّع visualViewport مع الحفاظ على موضع التمرير
   window._teFixSheetPos=function(){
     const sh=document.getElementById('sheet');if(!sh)return;
     const vv=window.visualViewport;
     const top=vv?vv.offsetTop:0;
     const h=vv?vv.height:window.innerHeight;
+    // احفظ موضع التمرير قبل تغيير الحجم
+    const teEd=document.getElementById('teEditor');
+    const savedST=teEd?teEd.scrollTop:0;
     sh.style.position='fixed';
     sh.style.left='0';sh.style.right='0';
     sh.style.top=top+'px';
@@ -2333,6 +2336,8 @@ function buildTextEditor(){
     sh.style.maxHeight='none';
     sh.style.borderRadius='0';
     sh.style.overflow='hidden';
+    // أعد موضع التمرير بعد إعادة الرسم لمنع القفز
+    if(teEd)requestAnimationFrame(()=>{teEd.scrollTop=savedST;});
   };
   window._teFixSheetPos();
   if(window.visualViewport){
@@ -2390,6 +2395,26 @@ function buildTextEditor(){
     </div>
     <div id="teEditor" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
     <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px;">${ar?'حجم الصفحة':'Page Size'}</label>
+          <select id="tePageSize" style="width:100%;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:0 6px;">
+            <option value="a4">A4</option>
+            <option value="a5">A5</option>
+            <option value="a3">A3</option>
+            <option value="letter">Letter</option>
+            <option value="legal">Legal</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px;">${ar?'عدد الصفحات':'Pages'}</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="teChangePages(-1)" style="width:34px;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;line-height:1;cursor:pointer;">−</button>
+            <input type="number" id="tePageCount" value="1" min="1" max="50" style="flex:1;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;text-align:center;">
+            <button onclick="teChangePages(1)" style="width:34px;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;line-height:1;cursor:pointer;">+</button>
+          </div>
+        </div>
+      </div>
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -2547,6 +2572,12 @@ function buildTextEditor(){
   tb.addEventListener('touchmove',()=>clearTimeout(_tmr),{passive:true});
 }
 
+function teChangePages(delta){
+  const el=document.getElementById('tePageCount');
+  if(!el)return;
+  const v=Math.min(50,Math.max(1,(parseInt(el.value)||1)+delta));
+  el.value=v;
+}
 function teCloseFullscreen(){
   document.body.style.overflow='';
   if(window.visualViewport&&window._teFixSheetPos){
