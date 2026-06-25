@@ -2321,15 +2321,13 @@ function buildTextEditor(){
   const ar=_lang==='ar';
   const sh=document.getElementById('sheet');
   const H=window.innerHeight;
-  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';}
-  // ثبّت body لمنع انزياح الكيبورد
+  if(sh){sh.style.height=H+'px';sh.style.maxHeight=H+'px';sh.style.borderRadius='0';sh.style.overflow='hidden';}
   document.body.style.overflow='hidden';
   document.body.style.position='fixed';
   document.body.style.top='0';document.body.style.left='0';
   document.body.style.right='0';document.body.style.bottom='0';
-  // sheetBody قابل للتمرير حتى يعمل الشريط الجانبي
   const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
+  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
 
   document.getElementById('sheetBody').innerHTML=`
     <div style="position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
@@ -2539,6 +2537,38 @@ function buildTextEditor(){
     if(e.target.tagName==='IMG'||_h.contains(e.target))return;
     _h.style.display='none';window._teCurImg=null;
   });
+
+  // اجعل الشريط الجانبي يتحكم في تمرير #teEditor
+  const teEd=document.getElementById('teEditor');
+  const gThumb=document.getElementById('globalThumb');
+  const gSB=document.getElementById('globalSB');
+  if(teEd&&gThumb&&gSB){
+    // تحديث الشريط عند تمرير المحرر
+    teEd.addEventListener('scroll',function(){
+      const sH=teEd.scrollHeight,cH=teEd.clientHeight,sT=teEd.scrollTop;
+      if(sH<=cH+2){gThumb.style.opacity='0.3';return;}
+      gThumb.style.opacity='1';
+      const sbH=gSB.offsetHeight,ratio=cH/sH;
+      const tH=Math.max(36,sbH*ratio);
+      gThumb.style.height=tH+'px';
+      gThumb.style.top=Math.round((sbH-tH)*(sT/(sH-cH)))+'px';
+    },{passive:true});
+    // اجعل سحب الشريط يتحكم في تمرير المحرر
+    gSB.style.pointerEvents='auto';
+    let _sbDragging=false,_sbStartY=0,_sbStartScroll=0;
+    gThumb.addEventListener('touchstart',function(e){
+      _sbDragging=true;_sbStartY=e.touches[0].clientY;_sbStartScroll=teEd.scrollTop;
+      e.preventDefault();
+    },{passive:false});
+    document.addEventListener('touchmove',function(e){
+      if(!_sbDragging)return;
+      const dy=e.touches[0].clientY-_sbStartY;
+      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
+      const ratio=(teEd.scrollHeight-teEd.clientHeight)/(sbH-tH);
+      teEd.scrollTop=_sbStartScroll+dy*ratio;
+    },{passive:true});
+    document.addEventListener('touchend',function(){_sbDragging=false;});
+  }
 
   const tb=document.getElementById('teToolbar');let _tmr=null,_lp=false;
   tb.addEventListener('touchstart',e=>{const t=e.target.closest('[title]');_lp=false;clearTimeout(_tmr);if(!t||!t.title)return;_tmr=setTimeout(()=>{_lp=true;toast(t.title,'ok');if(navigator.vibrate)navigator.vibrate(15);},420);},{passive:true});
