@@ -2321,11 +2321,16 @@ function buildTextEditor(){
   const ar=_lang==='ar';
   const sh=document.getElementById('sheet');
   if(sh){sh.style.height='100%';sh.style.maxHeight='100%';sh.style.borderRadius='0';}
+  // أعد sheetBody للتمرير الطبيعي حتى يعمل الشريط الجانبي
   const sb=document.getElementById('sheetBody');
-  if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
+  if(sb){sb.style.cssText='overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;';}
+  // ثبّت body لمنع انزياح الكيبورد
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
 
   document.getElementById('sheetBody').innerHTML=`
-    <div style="flex-shrink:0;background:#f3f3f3;border-bottom:1px solid #ddd;">
+    <div style="position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
       <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;">
         <span style="font-size:10px;color:#666;white-space:nowrap">${ar?'الخط:':'Font:'}</span>
         <select id="teFontSel" style="flex:1;height:26px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:12px;padding:0 4px;color:#333;">
@@ -2368,8 +2373,8 @@ function buildTextEditor(){
         </span>
       </div>
     </div>
-    <div id="teEditor" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
-    <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
+    <div id="teEditor" style="min-height:400px;background:#fff;"></div>
+    <div style="padding:10px;background:var(--bg);border-top:1px solid var(--border);">
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -2539,6 +2544,10 @@ function buildTextEditor(){
 }
 
 function teCloseFullscreen(){
+  // إعادة body لحالته الطبيعية
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.width='';
   const sh=document.getElementById('sheet');
   if(sh)sh.style.cssText='';
   closeSheet();
