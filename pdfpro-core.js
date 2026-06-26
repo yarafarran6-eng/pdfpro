@@ -2574,17 +2574,26 @@ function teApplyPages(){
   const dims={a4:1123,a5:794,a3:1587,letter:1056,legal:1344};
   const ph=dims[size]||1123;
   const totalH=ph*count;
-  // اضبط ارتفاع محرر Quill
+  // أضف أسطراً فارغة حتى يمتلئ كل صفحة ويصل المستخدم للصفحة التالية بشكل طبيعي
+  const lineH=28; // ارتفاع السطر التقريبي
+  const linesNeeded=Math.floor(totalH/lineH)+2;
+  const currentLen=q.getLength();
+  const currentLines=q.root.querySelectorAll('p,div').length||1;
+  const toAdd=Math.max(0,linesNeeded-currentLines);
+  if(toAdd>0){
+    const txt='\n'.repeat(toAdd);
+    q.insertText(currentLen-1,txt,Quill.sources.SILENT);
+  }
+  // اضبط ارتفاع المحرر
   q.root.style.minHeight=totalH+'px';
   q.root.style.backgroundImage='none';
-  // احذف الفواصل القديمة
+  // احذف الفواصل القديمة وأضف الجديدة
   document.querySelectorAll('#tePageBreaks').forEach(el=>el.remove());
   const teEd=document.getElementById('teEditor');if(!teEd)return;
   teEd.style.position='relative';
   if(count>1){
     const ov=document.createElement('div');
     ov.id='tePageBreaks';
-    // الارتفاع = إجمالي المحتوى (وليس bottom:0 الذي يعطي ارتفاع الشاشة فقط)
     ov.style.cssText=`position:absolute;top:0;left:0;right:0;height:${totalH}px;pointer-events:none;z-index:10;`;
     const ar2=_lang==='ar';
     for(let i=1;i<count;i++){
