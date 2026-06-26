@@ -2571,8 +2571,11 @@ function teApplyPages(){
   const q=window._teQuill;if(!q)return;
   const count=Math.max(1,parseInt(document.getElementById('tePageCount')?.value)||1);
   const size=(document.getElementById('tePageSize')?.value)||'a4';
-  const dims={a4:1123,a5:794,a3:1587,letter:1056,legal:1344};
-  const ph=dims[size]||1123;
+  // ارتفاع الصفحة بناء على عرض المحرر الفعلي (ليتطابق مع الـ PDF)
+  const mmR={a4:[210,297],a5:[148,210],a3:[297,420],letter:[215.9,279.4],legal:[215.9,355.6]};
+  const [mmW,mmH]=mmR[size]||mmR.a4;
+  const edW=q.root.offsetWidth||350;
+  const ph=Math.round(edW*(mmH/mmW));
   const totalH=ph*count;
   // أضف أسطراً فارغة حتى يمتلئ كل صفحة ويصل المستخدم للصفحة التالية بشكل طبيعي
   const lineH=28; // ارتفاع السطر التقريبي
@@ -2634,28 +2637,44 @@ function tePrint(){
 }
 async function teSaveAsPDF(){
   if(!window._teQuill){toast(_lang==='ar'?'المحرر غير جاهز':'Editor not ready','err');return;}
-  const nm=document.getElementById('teNm').value.trim()||'document';
+  const nm=(document.getElementById('teNm')?.value.trim())||'document';
+  const pageSize=(document.getElementById('tePageSize')?.value)||'a4';
+  const pageCount=Math.max(1,parseInt(document.getElementById('tePageCount')?.value)||1);
+  const mmRatios={a4:[210,297],a5:[148,210],a3:[297,420],letter:[215.9,279.4],legal:[215.9,355.6]};
+  const [mmW,mmH]=mmRatios[pageSize]||mmRatios.a4;
   const pb=document.getElementById('tePB'),pl=document.getElementById('tePL'),pf=document.getElementById('tePF');
-  pb.classList.add('show');pl.textContent=_lang==='ar'?'جاري التحضير...':'Preparing...';pf.style.width='10%';
+  if(pb)pb.classList.add('show');if(pl)pl.textContent=_lang==='ar'?'جاري التحضير...':'Preparing...';if(pf)pf.style.width='10%';
   try{
-    const editor=document.querySelector('#tePage .ql-editor');
-    const canvas=await html2canvas(editor,{scale:2,backgroundColor:'#ffffff',useCORS:true});
-    pf.style.width='55%';
-    const imgW=210,pxPerMm=canvas.width/imgW,pageHpx=Math.floor(297*pxPerMm);
-    const total=Math.max(1,Math.ceil(canvas.height/pageHpx));
-    const pdf=new jsPDF({unit:'mm',format:'a4'});
-    for(let i=0;i<total;i++){
-      const sh=Math.min(pageHpx,canvas.height-i*pageHpx);
-      const sc=document.createElement('canvas');sc.width=canvas.width;sc.height=sh;
-      const ctx=sc.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,sc.width,sc.height);
-      ctx.drawImage(canvas,0,-i*pageHpx);
-      if(i>0)pdf.addPage();
-      pdf.addImage(sc.toDataURL('image/jpeg',.92),'JPEG',0,0,imgW,sh/pxPerMm);
-      pf.style.width=(55+(i+1)/total*40)+'%';
+    const editor=window._teQuill.root;
+    // أخفِ الفواصل المرئية مؤقتاً قبل الالتقاط
+    const brk=document.getElementById('tePageBreaks');if(brk)brk.style.display='none';
+    const canvas=await html2canvas(editor,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+    if(brk)brk.style.display='';
+    if(pf)pf.style.width='50%';
+    // حساب ارتفاع الصفحة بنفس طريقة المحرر
+    const edW=editor.offsetWidth;
+    const ph=Math.round(edW*(mmH/mmW)); // بكسل CSS
+    const pageHpx=ph*2; // ×2 بسبب scale:2
+    const pdf=new jsPDF({unit:'mm',format:pageSize,orientation:'portrait'});
+    for(let i=0;i<pageCount;i++){
+      const startY=i*pageHpx;
+      if(startY>=canvas.height&&i>0)break;
+      const sliceH=Math.min(pageHpx,canvas.height-startY);
+      const sc=document.createElement('canvas');
+      sc.width=canvas.width;sc.height=pageHpx;
+      const ctx=sc.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,sc.width,pageHpx);
+      if(sliceH>0)ctx.drawImage(canvas,0,startY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+      if(i>0)pdf.addPage(pageSize,'portrait');
+      pdf.addImage(sc.toDataURL('image/jpeg',.92),'JPEG',0,0,mmW,mmH);
+      if(pf)pf.style.width=(50+(i+1)/pageCount*45)+'%';
     }
-    pdf.save(nm+'.pdf');addFile(nm+'.pdf','pdf');
-    pb.classList.remove('show');toast(_lang==='ar'?'تم الحفظ':'Saved','ok');closeSheet();
-  }catch(e){pb.classList.remove('show');toast('Error: '+e.message,'err');}
+    pdf.save(nm+'.pdf');
+    if(typeof addFile==='function')addFile(nm+'.pdf','pdf');
+    if(pb)pb.classList.remove('show');
+    toast(_lang==='ar'?'تم الحفظ':'Saved','ok');
+    closeSheet();
+  }catch(e){if(pb)pb.classList.remove('show');toast('Error: '+e.message,'err');}
 }
 
 // مجلد
