@@ -2588,8 +2588,7 @@ function teApplyPages(){
   // أضف أسطراً فارغة كافية
   const needed=Math.ceil(ph*count/lineH)+3;
   const cur=q.root.querySelectorAll('p').length||1;
-  if(needed>cur) q.insertText(q.getLength()-1,'
-'.repeat(needed-cur),Quill.sources.SILENT);
+  if(needed>cur) q.insertText(q.getLength()-1,'\n'.repeat(needed-cur),Quill.sources.SILENT);
   q.root.style.minHeight=(ph*count)+'px';
   q.root.style.position='relative';
   // ضع فواصل داخل .ql-editor مباشرة (نفس إحداثيات html2canvas)
