@@ -2355,18 +2355,18 @@ function buildTextEditor(){
           <option value="Arial">Arial</option>
         </select>
         <button id="teMenuBtn" onclick="teToggleMenu(event)" style="width:32px;height:32px;background:none;border:none;font-size:20px;cursor:pointer;color:#555;line-height:1;padding:0;flex-shrink:0;border-radius:6px;" title="${ar?'خيارات':'Options'}">⋮</button>
-        <div id="teMenu" style="display:none;position:absolute;top:38px;${ar?'left:0':'right:0'};background:#fff;border:1px solid #ddd;border-radius:10px;z-index:999;min-width:210px;box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;">
-          <div onclick="tePrint();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <div id="teMenu" style="display:none;position:absolute;top:38px;${ar?'left:0':'right:0'};background:#fff;border:1px solid #ddd;border-radius:10px;z-index:999;min-width:210px;box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;color:#222;">
+          <div onclick="tePrint();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;color:#222;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             ${ar?'طباعة':'Print'}
           </div>
-          <div onclick="teSaveAsPDF();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <div onclick="teSaveAsPDF();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;color:#222;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             ${ar?'حفظ PDF (جهاز)':'Save PDF (device)'}
           </div>
-          <div onclick="toast(${ar?`'قريباً — سيتوفر مع إطلاق النظام'`:`'Coming soon with system launch'`},'ok')" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            ${ar?'حفظ في الموقع':'Save to site'}
+          <div style="padding:12px 16px;font-size:14px;color:#aaa;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;cursor:default;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            ${ar?'حفظ في الموقع (قريباً)':'Save to site (coming soon)'}
           </div>
           <div style="padding:10px 16px;border-bottom:1px solid #f0f0f0;">
             <div style="font-size:11px;color:#888;margin-bottom:5px;">${ar?'حجم الصفحة':'Page Size'}</div>
@@ -2568,34 +2568,22 @@ function teChangePages(delta){
 
 function teApplyPages(){
   const q=window._teQuill;if(!q)return;
-  const countEl=document.getElementById('tePageCount');
-  const sizeEl=document.getElementById('tePageSize');
-  const count=parseInt(countEl&&countEl.value)||1;
-  const size=(sizeEl&&sizeEl.value)||'a4';
-  // أبعاد الصفحات بـ px (96dpi)
-  const dims={a4:[794,1123],a5:[559,794],a3:[1123,1587],letter:[816,1056],legal:[816,1344]};
-  const [pw,ph]=dims[size]||dims.a4;
-  // عدد فواصل الصفحات المطلوبة = count - 1
-  const needed=count-1;
-  const root=q.root;
-  // احذف الفواصل الموجودة
-  root.querySelectorAll('.te-page-break').forEach(el=>el.remove());
-  // أضف الفواصل الجديدة في نهاية المحتوى
-  for(let i=0;i<needed;i++){
-    const br=document.createElement('div');
-    br.className='te-page-break';
-    br.contentEditable='false';
-    br.style.cssText='width:100%;height:2px;background:linear-gradient(90deg,transparent,#e53935,transparent);margin:16px 0;position:relative;pointer-events:none;';
-    const lbl=document.createElement('span');
-    lbl.textContent=(_lang==='ar'?'صفحة ':'Page ')+(i+2);
-    lbl.style.cssText='position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;padding:0 8px;font-size:11px;color:#e53935;white-space:nowrap;';
-    br.appendChild(lbl);
-    root.appendChild(br);
+  const count=Math.max(1,parseInt(document.getElementById('tePageCount')?.value)||1);
+  const size=(document.getElementById('tePageSize')?.value)||'a4';
+  const dims={a4:1123,a5:794,a3:1587,letter:1056,legal:1344};
+  const ph=dims[size]||1123;
+  // اضبط الحد الأدنى لارتفاع المحرر
+  q.root.style.minHeight=(ph*count)+'px';
+  // ارسم فواصل الصفحات كخطوط CSS بدون التدخل في محتوى Quill
+  if(count>1){
+    q.root.style.backgroundImage=`repeating-linear-gradient(to bottom,transparent,transparent ${ph-2}px,#e53935 ${ph-2}px,#e53935 ${ph}px)`;
+    q.root.style.backgroundSize=`100% ${ph}px`;
+    q.root.style.backgroundAttachment='local';
+  }else{
+    q.root.style.backgroundImage='none';
   }
-  // اجعل المحرر يعكس ارتفاع الصفحات
-  root.style.minHeight=(ph*count+16*needed)+'px';
-  const ar2=_lang==='ar';
-  toast((ar2?`${count} صفحة ${size.toUpperCase()}`:`${count} page(s) ${size.toUpperCase()}`),'ok');
+  const ar=_lang==='ar';
+  toast((ar?`${count} صفحة — `:`${count} page(s) — `)+size.toUpperCase(),'ok');
 }
 function teCloseFullscreen(){
   document.body.style.overflow='';
