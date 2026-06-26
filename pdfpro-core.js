@@ -2573,26 +2573,29 @@ function teApplyPages(){
   const size=(document.getElementById('tePageSize')?.value)||'a4';
   const dims={a4:1123,a5:794,a3:1587,letter:1056,legal:1344};
   const ph=dims[size]||1123;
-  // اضبط الارتفاع
-  q.root.style.minHeight=(ph*count)+'px';
+  const totalH=ph*count;
+  // اضبط ارتفاع محرر Quill
+  q.root.style.minHeight=totalH+'px';
   q.root.style.backgroundImage='none';
   // احذف الفواصل القديمة
-  const old=document.getElementById('tePageBreaks');if(old)old.remove();
-  const teEd=document.getElementById('teEditor');
-  if(!teEd)return;
+  document.querySelectorAll('#tePageBreaks').forEach(el=>el.remove());
+  const teEd=document.getElementById('teEditor');if(!teEd)return;
   teEd.style.position='relative';
   if(count>1){
     const ov=document.createElement('div');
     ov.id='tePageBreaks';
-    ov.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:2;';
+    // الارتفاع = إجمالي المحتوى (وليس bottom:0 الذي يعطي ارتفاع الشاشة فقط)
+    ov.style.cssText=`position:absolute;top:0;left:0;right:0;height:${totalH}px;pointer-events:none;z-index:10;`;
     const ar2=_lang==='ar';
     for(let i=1;i<count;i++){
+      const y=ph*i;
       const ln=document.createElement('div');
-      ln.style.cssText=`position:absolute;top:${ph*i}px;left:0;right:0;height:3px;background:#e53935;`;
+      ln.style.cssText=`position:absolute;top:${y}px;left:0;right:0;height:3px;background:#e53935;`;
+      ov.appendChild(ln);
       const lb=document.createElement('div');
       lb.textContent=(ar2?'صفحة ':'Page ')+(i+1);
-      lb.style.cssText=`position:absolute;top:${ph*i-18}px;left:50%;transform:translateX(-50%);background:#e53935;color:#fff;padding:2px 12px;border-radius:4px;font-size:11px;white-space:nowrap;`;
-      ov.appendChild(lb);ov.appendChild(ln);
+      lb.style.cssText=`position:absolute;top:${y-20}px;left:50%;transform:translateX(-50%);background:#e53935;color:#fff;padding:2px 12px;border-radius:4px;font-size:11px;white-space:nowrap;`;
+      ov.appendChild(lb);
     }
     teEd.appendChild(ov);
   }
