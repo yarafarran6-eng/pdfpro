@@ -2567,7 +2567,6 @@ function teChangePages(delta){
   teApplyPages();
 }
 
-// احسب ارتفاع الصفحة من عرض .ql-editor (نفس ما سيُلتقط بـ html2canvas)
 function teApplyPages(){
   const q=window._teQuill;if(!q)return;
   const count=Math.max(1,parseInt(document.getElementById('tePageCount')?.value)||1);
@@ -2576,40 +2575,36 @@ function teApplyPages(){
   const [mmW,mmH]=mmR[size]||mmR.a4;
   const edW=q.root.offsetWidth||350;
   const ph=Math.round(edW*(mmH/mmW));
-  // خزّن للـ PDF
   window._tePageH=ph;window._tePageSize=size;window._tePageCount=count;
-  // احذف الفواصل القديمة
-  q.root.querySelectorAll('.te-pb').forEach(el=>el.remove());
-  // قس ارتفاع السطر الفعلي
-  const tmp=document.createElement('p');tmp.innerHTML='&nbsp;';
-  q.root.appendChild(tmp);
-  const lineH=Math.max(16,tmp.offsetHeight);
-  q.root.removeChild(tmp);
-  // أضف أسطراً فارغة كافية
-  const needed=Math.ceil(ph*count/lineH)+3;
+  // أضف أسطراً فارغة (قس ارتفاع السطر الفعلي أولاً)
+  const tmp=q.root.querySelector('p')||q.root.firstElementChild;
+  const lineH=Math.max(18,tmp?tmp.offsetHeight:22);
+  const needed=Math.ceil(ph*count/lineH)+2;
   const cur=q.root.querySelectorAll('p').length||1;
   if(needed>cur) q.insertText(q.getLength()-1,'\n'.repeat(needed-cur),Quill.sources.SILENT);
   q.root.style.minHeight=(ph*count)+'px';
-  q.root.style.position='relative';
-  // ضع فواصل داخل .ql-editor مباشرة (نفس إحداثيات html2canvas)
+  // ضع الـ overlay خارج .ql-editor وداخل #teEditor مباشرة
+  const teEd=document.getElementById('teEditor');if(!teEd)return;
+  document.querySelectorAll('#tePageBreaks').forEach(el=>el.remove());
+  teEd.style.position='relative';
   if(count>1){
+    const ov=document.createElement('div');
+    ov.id='tePageBreaks';
+    ov.style.cssText='position:absolute;top:0;left:0;right:0;height:'+( ph*count)+'px;pointer-events:none;z-index:10;';
     const ar2=_lang==='ar';
     for(let i=1;i<count;i++){
       const y=ph*i;
-      const d=document.createElement('div');
-      d.className='te-pb';d.contentEditable='false';
-      d.style.cssText=`position:absolute;top:${y}px;left:0;right:0;pointer-events:none;z-index:10;`;
       const ln=document.createElement('div');
-      ln.style.cssText='width:100%;height:3px;background:#e53935;';
+      ln.style.cssText='position:absolute;top:'+y+'px;left:0;right:0;height:3px;background:#e53935;';
       const lb=document.createElement('div');
       lb.textContent=(ar2?'صفحة ':'Page ')+(i+1);
-      lb.style.cssText='position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#e53935;color:#fff;padding:2px 12px;border-radius:4px;font-size:11px;white-space:nowrap;';
-      d.appendChild(lb);d.appendChild(ln);
-      q.root.appendChild(d);
+      lb.style.cssText='position:absolute;top:'+(y-20)+'px;left:50%;transform:translateX(-50%);background:#e53935;color:#fff;padding:2px 12px;border-radius:4px;font-size:11px;white-space:nowrap;';
+      ov.appendChild(lb);ov.appendChild(ln);
     }
+    teEd.appendChild(ov);
   }
   const ar=_lang==='ar';
-  toast((ar?`${count} صفحة — `:`${count} page(s) — `)+size.toUpperCase(),'ok');
+  toast((ar?count+' صفحة — ':count+' page(s) — ')+size.toUpperCase(),'ok');
 }
 
 function teCloseFullscreen(){
@@ -2640,36 +2635,33 @@ async function teSaveAsPDF(){
   const pageCount=window._tePageCount||1;
   const mmR={a4:[210,297],a5:[148,210],a3:[297,420],letter:[215.9,279.4],legal:[215.9,355.6]};
   const [mmW,mmH]=mmR[pageSize]||mmR.a4;
+  const ph=window._tePageH||(Math.round((window._teQuill.root.offsetWidth||350)*(mmH/mmW)));
   const pb=document.getElementById('tePB'),pl=document.getElementById('tePL'),pf=document.getElementById('tePF');
   if(pb)pb.classList.add('show');if(pl)pl.textContent=_lang==='ar'?'جاري التحضير...':'Preparing...';if(pf)pf.style.width='10%';
   try{
-    const editor=window._teQuill.root;
-    const ph=window._tePageH||Math.round((editor.offsetWidth||350)*(mmH/mmW));
-    // أخفِ فواصل الصفحات المرئية قبل الالتقاط
-    editor.querySelectorAll('.te-pb').forEach(el=>{el.dataset.vis=el.style.visibility;el.style.visibility='hidden';});
-    const canvas=await html2canvas(editor,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
-    editor.querySelectorAll('.te-pb').forEach(el=>{el.style.visibility=el.dataset.vis||'';});
+    const teEd=document.getElementById('teEditor');
+    // أخفِ الـ overlay وأجعل المحرر visible للالتقاط الكامل
+    const brk=document.getElementById('tePageBreaks');if(brk)brk.style.display='none';
+    const savedOv=teEd.style.overflowY;teEd.style.overflowY='visible';
+    const canvas=await html2canvas(teEd,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});
+    teEd.style.overflowY=savedOv;if(brk)brk.style.display='';
     if(pf)pf.style.width='50%';
-    // اقسم الـ canvas بنفس ارتفاع الصفحة المستخدم في المحرر (×2 للـ scale)
+    // ارتفاع الصفحة في الـ canvas = ph × 2 (نفس إحداثيات الـ overlay)
     const pageHpx=ph*2;
     const pdf=new jsPDF({unit:'mm',format:pageSize,orientation:'portrait'});
     for(let i=0;i<pageCount;i++){
       const startY=i*pageHpx;
       if(startY>=canvas.height&&i>0)break;
       const sliceH=Math.min(pageHpx,canvas.height-startY);
-      const sc=document.createElement('canvas');
-      sc.width=canvas.width;sc.height=pageHpx;
-      const ctx=sc.getContext('2d');
-      ctx.fillStyle='#fff';ctx.fillRect(0,0,sc.width,pageHpx);
+      const sc=document.createElement('canvas');sc.width=canvas.width;sc.height=pageHpx;
+      const ctx=sc.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,sc.width,pageHpx);
       if(sliceH>0)ctx.drawImage(canvas,0,startY,canvas.width,sliceH,0,0,canvas.width,sliceH);
       if(i>0)pdf.addPage(pageSize,'portrait');
       pdf.addImage(sc.toDataURL('image/jpeg',.92),'JPEG',0,0,mmW,mmH);
       if(pf)pf.style.width=(50+(i+1)/pageCount*45)+'%';
     }
-    pdf.save(nm+'.pdf');
-    if(typeof addFile==='function')addFile(nm+'.pdf','pdf');
-    if(pb)pb.classList.remove('show');
-    toast(_lang==='ar'?'تم الحفظ':'Saved','ok');closeSheet();
+    pdf.save(nm+'.pdf');if(typeof addFile==='function')addFile(nm+'.pdf','pdf');
+    if(pb)pb.classList.remove('show');toast(_lang==='ar'?'تم الحفظ':'Saved','ok');closeSheet();
   }catch(e){if(pb)pb.classList.remove('show');toast('Error: '+e.message,'err');}
 }
 
