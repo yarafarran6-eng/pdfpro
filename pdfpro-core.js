@@ -2583,6 +2583,9 @@ function teApplyPages(){
   const cur=q.root.querySelectorAll('p').length||1;
   if(needed>cur) q.insertText(q.getLength()-1,'\n'.repeat(needed-cur),Quill.sources.SILENT);
   q.root.style.minHeight=(ph*count)+'px';
+  // ql-container لديها height:100% — نحتاج تعيين minHeight عليها أيضاً
+  const qlCont=document.getElementById('teEditor')?.querySelector('.ql-container');
+  if(qlCont) qlCont.style.minHeight=(ph*count)+'px';
   // ضع الـ overlay خارج .ql-editor وداخل #teEditor مباشرة
   const teEd=document.getElementById('teEditor');if(!teEd)return;
   document.querySelectorAll('#tePageBreaks').forEach(el=>el.remove());
