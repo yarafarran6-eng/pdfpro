@@ -2320,23 +2320,15 @@ function doNote(){
 function buildTextEditor(){
   const ar=_lang==='ar';
 
-  // تتبّع visualViewport مع الحفاظ على موضع التمرير
   window._teFixSheetPos=function(){
     const sh=document.getElementById('sheet');if(!sh)return;
     const vv=window.visualViewport;
-    const top=vv?vv.offsetTop:0;
-    const h=vv?vv.height:window.innerHeight;
-    // احفظ موضع التمرير قبل تغيير الحجم
+    const top=vv?vv.offsetTop:0,h=vv?vv.height:window.innerHeight;
     const teEd=document.getElementById('teEditor');
     const savedST=teEd?teEd.scrollTop:0;
-    sh.style.position='fixed';
-    sh.style.left='0';sh.style.right='0';
-    sh.style.top=top+'px';
-    sh.style.height=h+'px';
-    sh.style.maxHeight='none';
-    sh.style.borderRadius='0';
-    sh.style.overflow='hidden';
-    // أعد موضع التمرير بعد إعادة الرسم لمنع القفز
+    sh.style.position='fixed';sh.style.left='0';sh.style.right='0';
+    sh.style.top=top+'px';sh.style.height=h+'px';sh.style.maxHeight='none';
+    sh.style.borderRadius='0';sh.style.overflow='hidden';
     if(teEd)requestAnimationFrame(()=>{teEd.scrollTop=savedST;});
   };
   window._teFixSheetPos();
@@ -2344,14 +2336,13 @@ function buildTextEditor(){
     window.visualViewport.addEventListener('resize',window._teFixSheetPos);
     window.visualViewport.addEventListener('scroll',window._teFixSheetPos);
   }
-
   document.body.style.overflow='hidden';
   const sb=document.getElementById('sheetBody');
   if(sb){sb.style.cssText='display:flex;flex-direction:column;overflow:hidden;padding:0;flex:1;';}
 
   document.getElementById('sheetBody').innerHTML=`
     <div style="flex-shrink:0;position:sticky;top:0;z-index:10;background:#f3f3f3;border-bottom:1px solid #ddd;">
-      <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;">
+      <div style="display:flex;align-items:center;padding:3px 6px;gap:6px;border-bottom:1px solid #eee;position:relative;">
         <span style="font-size:10px;color:#666;white-space:nowrap">${ar?'الخط:':'Font:'}</span>
         <select id="teFontSel" style="flex:1;height:26px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:12px;padding:0 4px;color:#333;">
           <option value="">${ar?'اختر الخط':'Select font'}</option>
@@ -2363,6 +2354,34 @@ function buildTextEditor(){
           <option value="Courier New">Courier New</option>
           <option value="Arial">Arial</option>
         </select>
+        <button id="teMenuBtn" onclick="teToggleMenu(event)" style="width:32px;height:32px;background:none;border:none;font-size:20px;cursor:pointer;color:#555;line-height:1;padding:0;flex-shrink:0;border-radius:6px;" title="${ar?'خيارات':'Options'}">⋮</button>
+        <div id="teMenu" style="display:none;position:absolute;top:38px;${ar?'left:0':'right:0'};background:#fff;border:1px solid #ddd;border-radius:10px;z-index:999;min-width:210px;box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;">
+          <div onclick="tePrint();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:16px;">🖨</span> ${ar?'طباعة':'Print'}
+          </div>
+          <div onclick="teSaveAsPDF();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:16px;">💾</span> ${ar?'حفظ PDF (جهاز)':'Save PDF (device)'}
+          </div>
+          <div style="padding:12px 16px;font-size:14px;color:#aaa;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:16px;">☁</span> ${ar?'حفظ في الموقع (قريباً)':'Save to site (coming soon)'}
+          </div>
+          <div style="padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+            <div style="font-size:11px;color:#888;margin-bottom:5px;">${ar?'حجم الصفحة':'Page Size'}</div>
+            <select id="tePageSize" style="width:100%;height:30px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;font-size:13px;padding:0 6px;">
+              <option value="a4">A4</option><option value="a5">A5</option>
+              <option value="a3">A3</option><option value="letter">Letter</option>
+              <option value="legal">Legal</option>
+            </select>
+          </div>
+          <div style="padding:10px 16px;">
+            <div style="font-size:11px;color:#888;margin-bottom:5px;">${ar?'عدد الصفحات':'Pages'}</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button onclick="teChangePages(-1)" style="width:32px;height:32px;background:#f0f0f0;border:1px solid #ddd;border-radius:6px;font-size:18px;cursor:pointer;">−</button>
+              <input type="number" id="tePageCount" value="1" min="1" max="50" style="flex:1;height:32px;border:1px solid #ddd;border-radius:6px;text-align:center;font-size:14px;">
+              <button onclick="teChangePages(1)" style="width:32px;height:32px;background:#f0f0f0;border:1px solid #ddd;border-radius:6px;font-size:18px;cursor:pointer;">+</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="teToolbar">
         <span class="ql-formats">
@@ -2395,33 +2414,16 @@ function buildTextEditor(){
     </div>
     <div id="teEditor" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;"></div>
     <div style="flex-shrink:0;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <div style="flex:1;">
-          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px;">${ar?'حجم الصفحة':'Page Size'}</label>
-          <select id="tePageSize" style="width:100%;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:0 6px;">
-            <option value="a4">A4</option>
-            <option value="a5">A5</option>
-            <option value="a3">A3</option>
-            <option value="letter">Letter</option>
-            <option value="legal">Legal</option>
-          </select>
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px;">${ar?'عدد الصفحات':'Pages'}</label>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <button onclick="teChangePages(-1)" style="width:34px;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;line-height:1;cursor:pointer;">−</button>
-            <input type="number" id="tePageCount" value="1" min="1" max="50" style="flex:1;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;text-align:center;">
-            <button onclick="teChangePages(1)" style="width:34px;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;line-height:1;cursor:pointer;">+</button>
-          </div>
-        </div>
-      </div>
       <div class="field"><label>${ar?'اسم الملف':'File Name'}</label><input type="text" id="teNm" value="${ar?'مستند جديد':'New Document'}"></div>
       <div class="prog-box" id="tePB"><div class="prog-lbl" id="tePL"></div><div class="prog-bar"><div class="prog-fill" id="tePF"></div></div></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button style="flex:1;padding:11px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" onclick="tePrint()">${ar?'طباعة':'Print'}</button>
-        <button class="action-btn" style="flex:1" onclick="teSaveAsPDF()">${icoDl()} ${ar?'حفظ PDF':'Save PDF'}</button>
-      </div>
     </div>`;
+
+  // أغلق القائمة عند الضغط خارجها
+  document.addEventListener('pointerdown',function _closeMenu(e){
+    const m=document.getElementById('teMenu');
+    const b=document.getElementById('teMenuBtn');
+    if(m&&b&&!m.contains(e.target)&&e.target!==b){m.style.display='none';}
+  });
 
   try{
     const FontStyle=Quill.import('attributors/style/font');
@@ -2455,7 +2457,6 @@ function buildTextEditor(){
     });
   }
 
-  // اجعل الشريط الجانبي يتحكم في #teEditor مباشرة
   const teEd=document.getElementById('teEditor');
   const gThumb=document.getElementById('globalThumb');
   const gSB=document.getElementById('globalSB');
@@ -2464,42 +2465,22 @@ function buildTextEditor(){
       const sH=teEd.scrollHeight,cH=teEd.clientHeight,sT=teEd.scrollTop;
       if(sH<=cH+2){gThumb.style.height='40px';gThumb.style.top='0';gThumb.style.opacity='0.3';return;}
       gThumb.style.opacity='1';
-      const sbH=gSB.offsetHeight,ratio=cH/sH;
-      const tH=Math.max(36,sbH*ratio);
+      const sbH=gSB.offsetHeight,ratio=cH/sH,tH=Math.max(36,sbH*ratio);
       gThumb.style.height=tH+'px';
       gThumb.style.top=Math.round((sbH-tH)*(sT/(sH-cH)))+'px';
     }
     teEd.addEventListener('scroll',teUpdateSB,{passive:true});
     setTimeout(teUpdateSB,200);
-
-    // سحب الشريط → تمرير المحرر
     let _sd=false,_sy=0,_ss=0;
-    gThumb.addEventListener('touchstart',function(e){
-      _sd=true;_sy=e.touches[0].clientY;_ss=teEd.scrollTop;e.preventDefault();
-    },{passive:false});
     gThumb.addEventListener('pointerdown',function(e){
       _sd=true;_sy=e.clientY;_ss=teEd.scrollTop;e.preventDefault();
       document.addEventListener('pointermove',_pmv,{passive:false});
       document.addEventListener('pointerup',_pup);
     });
-    function _pmv(e){
-      if(!_sd)return;e.preventDefault();
-      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
-      const range=teEd.scrollHeight-teEd.clientHeight;
-      if(range<=0)return;
-      teEd.scrollTop=_ss+(e.clientY-_sy)*(range/(sbH-tH));
-    }
+    function _pmv(e){if(!_sd)return;e.preventDefault();const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40,range=teEd.scrollHeight-teEd.clientHeight;if(range<=0)return;teEd.scrollTop=_ss+(e.clientY-_sy)*(range/(sbH-tH));}
     function _pup(){_sd=false;document.removeEventListener('pointermove',_pmv);document.removeEventListener('pointerup',_pup);}
-    document.addEventListener('touchmove',function(e){
-      if(!_sd)return;
-      const sbH=gSB.offsetHeight,tH=parseFloat(gThumb.style.height)||40;
-      const range=teEd.scrollHeight-teEd.clientHeight;if(range<=0)return;
-      teEd.scrollTop=_ss+(e.touches[0].clientY-_sy)*(range/(sbH-tH));
-    },{passive:true});
-    document.addEventListener('touchend',function(){_sd=false;});
   }
 
-  // مقابض الصورة
   let _h=document.getElementById('teImgH');if(_h)_h.remove();
   _h=document.createElement('div');_h.id='teImgH';
   _h.style.cssText='display:none;position:fixed;z-index:9999;border:2px solid #e53935;pointer-events:none;box-sizing:border-box;';
@@ -2513,9 +2494,8 @@ function buildTextEditor(){
     if(!img.style.right||img.style.right==='auto')img.style.right='0px';
     if(!img.style.top||img.style.top==='auto')img.style.top='0px';
     img.style.left='auto';
-    const sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0;
-    const sx=ev.clientX,sy=ev.clientY;
-    function mv(e2){e2.preventDefault();img.style.right=(sr-( e2.clientX-sx))+'px';img.style.top=(st+(e2.clientY-sy))+'px';tePositionImgH(img);}
+    const sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0,sx=ev.clientX,sy=ev.clientY;
+    function mv(e2){e2.preventDefault();img.style.right=(sr-(e2.clientX-sx))+'px';img.style.top=(st+(e2.clientY-sy))+'px';tePositionImgH(img);}
     function up(){document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);}
     document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);
   });
@@ -2534,13 +2514,10 @@ function buildTextEditor(){
       if(!img.style.right||img.style.right==='auto')img.style.right='0px';
       if(!img.style.top||img.style.top==='auto')img.style.top='0px';
       img.style.left='auto';
-      const sw=img.offsetWidth,sh2=img.offsetHeight;
-      const sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0;
+      const sw=img.offsetWidth,sh2=img.offsetHeight,sr=parseFloat(img.style.right)||0,st=parseFloat(img.style.top)||0,sx=ev.clientX,sy=ev.clientY;
       img.style.width=sw+'px';img.style.height=sh2+'px';
-      const sx=ev.clientX,sy=ev.clientY;
       function mv(e2){
-        e2.preventDefault();
-        const dx=e2.clientX-sx,dy=e2.clientY-sy;
+        e2.preventDefault();const dx=e2.clientX-sx,dy=e2.clientY-sy;
         if(id==='s')img.style.height=Math.max(30,sh2+dy)+'px';
         if(id==='n'){img.style.height=Math.max(30,sh2-dy)+'px';img.style.top=(st+dy)+'px';}
         if(id==='e'){img.style.width=Math.max(30,sw+dx)+'px';img.style.right=(sr-dx)+'px';}
@@ -2572,6 +2549,11 @@ function buildTextEditor(){
   tb.addEventListener('touchmove',()=>clearTimeout(_tmr),{passive:true});
 }
 
+function teToggleMenu(e){
+  if(e)e.stopPropagation();
+  const m=document.getElementById('teMenu');
+  if(m)m.style.display=m.style.display==='none'?'block':'none';
+}
 function teChangePages(delta){
   const el=document.getElementById('tePageCount');
   if(!el)return;
