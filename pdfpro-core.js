@@ -2355,7 +2355,8 @@ function buildTextEditor(){
           <option value="Arial">Arial</option>
         </select>
         <button id="teMenuBtn" onclick="teToggleMenu(event)" style="width:32px;height:32px;background:none;border:none;font-size:20px;cursor:pointer;color:#555;line-height:1;padding:0;flex-shrink:0;border-radius:6px;" title="${ar?'خيارات':'Options'}">⋮</button>
-        <div id="teMenu" style="display:none;position:absolute;top:38px;${ar?'left:0':'right:0'};background:#fff;border:1px solid #ddd;border-radius:10px;z-index:999;min-width:210px;box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;color:#222;">
+        <style>#teMenu,#teMenu *{color:#111!important;font-family:inherit}</style>
+        <div id="teMenu" style="display:none;position:absolute;top:38px;${ar?'left:0':'right:0'};background:#ffffff;border:1px solid #ccc;border-radius:10px;z-index:9999;min-width:220px;box-shadow:0 8px 24px rgba(0,0,0,0.22);overflow:hidden;">
           <div onclick="tePrint();teToggleMenu()" style="padding:12px 16px;font-size:14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;color:#222;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             ${ar?'طباعة':'Print'}
@@ -2572,15 +2573,28 @@ function teApplyPages(){
   const size=(document.getElementById('tePageSize')?.value)||'a4';
   const dims={a4:1123,a5:794,a3:1587,letter:1056,legal:1344};
   const ph=dims[size]||1123;
-  // اضبط الحد الأدنى لارتفاع المحرر
+  // اضبط الارتفاع
   q.root.style.minHeight=(ph*count)+'px';
-  // ارسم فواصل الصفحات كخطوط CSS بدون التدخل في محتوى Quill
+  q.root.style.backgroundImage='none';
+  // احذف الفواصل القديمة
+  const old=document.getElementById('tePageBreaks');if(old)old.remove();
+  const teEd=document.getElementById('teEditor');
+  if(!teEd)return;
+  teEd.style.position='relative';
   if(count>1){
-    q.root.style.backgroundImage=`repeating-linear-gradient(to bottom,transparent,transparent ${ph-2}px,#e53935 ${ph-2}px,#e53935 ${ph}px)`;
-    q.root.style.backgroundSize=`100% ${ph}px`;
-    q.root.style.backgroundAttachment='local';
-  }else{
-    q.root.style.backgroundImage='none';
+    const ov=document.createElement('div');
+    ov.id='tePageBreaks';
+    ov.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:2;';
+    const ar2=_lang==='ar';
+    for(let i=1;i<count;i++){
+      const ln=document.createElement('div');
+      ln.style.cssText=`position:absolute;top:${ph*i}px;left:0;right:0;height:3px;background:#e53935;`;
+      const lb=document.createElement('div');
+      lb.textContent=(ar2?'صفحة ':'Page ')+(i+1);
+      lb.style.cssText=`position:absolute;top:${ph*i-18}px;left:50%;transform:translateX(-50%);background:#e53935;color:#fff;padding:2px 12px;border-radius:4px;font-size:11px;white-space:nowrap;`;
+      ov.appendChild(lb);ov.appendChild(ln);
+    }
+    teEd.appendChild(ov);
   }
   const ar=_lang==='ar';
   toast((ar?`${count} صفحة — `:`${count} page(s) — `)+size.toUpperCase(),'ok');
